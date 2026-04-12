@@ -53,8 +53,6 @@ export default function DashboardPage() {
     fetcher
   );
 
-  console.log(stats);
-
   // Chart data preparation
   const revenueData = useMemo(() => {
     return stats?.data.dailyRevenue?.map((item: any) => ({

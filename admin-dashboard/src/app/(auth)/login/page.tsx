@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Car } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import api from "@/lib/api";
 
 export default function LoginPage() {
@@ -26,8 +26,6 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", { email, password });
       const { token, user } = res.data;
 
-      console.log("Logged in user:", user);
-      console.log("Received token:", token);
 
       // Save token
       localStorage.setItem("token", token);
@@ -101,6 +99,11 @@ export default function LoginPage() {
               "Sign In"
             )}
           </Button>
+          <div className="text-center mt-4">
+            <a href="/forgot-password" className="text-blue-600 hover:underline">
+              Forgot password?
+            </a>
+          </div>
         </form>
       </Card>
     </div>

@@ -9,6 +9,9 @@ const bookingSchema = new mongoose.Schema({
   bookingRef: {type: String,unique: true,sparse: true},
   deposit: { type: Number, default: 0 },
   balance: { type: Number, default: 0 },
+  driversLicense: { type: String, required: true },
+  pickupLocation: { type: String },
+  note: { type: String },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'cancelled', 'completed'],

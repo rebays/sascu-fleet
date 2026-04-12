@@ -84,6 +84,8 @@ export default function AdminBookingsPage() {
     deposit: '0.00',
     balance: '0.00',
     status: 'pending',
+    driverLicense: '',
+    pickupLocation: '',
     paymentStatus: 'pending',
     totalPrice: '0.00'
   });
@@ -100,8 +102,8 @@ export default function AdminBookingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<any>(null);
 
-  
- // Combined filter: search + status
+
+  // Combined filter: search + status
   const filtered = useMemo(() => {
     let list = bookings;
 
@@ -147,6 +149,8 @@ export default function AdminBookingsPage() {
       deposit: '0.00',
       balance: '0.00',
       status: 'pending',
+      driverLicense: '',
+      pickupLocation: '',
       paymentStatus: 'pending',
       totalPrice: '0.00'
     });
@@ -167,6 +171,8 @@ export default function AdminBookingsPage() {
       balance: booking.balance.toString(),
       status: booking.status,
       paymentStatus: booking.paymentStatus,
+      driverLicense: booking.driversLicense || '',
+      pickupLocation: booking.pickupLocation || '',
       totalPrice: booking.totalPrice.toString(),
     });
     setCreatingUser(false);
@@ -217,6 +223,8 @@ export default function AdminBookingsPage() {
       balance: totalPrice - (parseFloat(form.deposit) || 0),
       status: form.status,
       paymentStatus: form.paymentStatus,
+      driversLicense: form.driverLicense,
+      pickupLocation: form.pickupLocation,
       totalPrice: totalPrice,
     };
 
@@ -553,301 +561,314 @@ export default function AdminBookingsPage() {
       )}
 
       {/* Create/Edit Modal */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Edit' : 'Create'} Booking</DialogTitle>
-          </DialogHeader>
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogContent className="max-w-7xl">
+    <DialogHeader>
+      <DialogTitle>{editing ? 'Edit' : 'Create'} Booking</DialogTitle>
+    </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Vehicle Picker */}
+    <div className="py-4">
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Vehicle Picker */}
+          <div>
+            <Label>Vehicle</Label>
+            <Popover open={vehicleOpen} onOpenChange={setVehicleOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full flex justify-between">
+                  {form.vehicleId
+                    ? `${vehicles.find((v: any) => v._id === form.vehicleId)?.make} ${vehicles.find((v: any) => v._id === form.vehicleId)?.model}`
+                    : 'Select vehicle...'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Search vehicles..." />
+                  <CommandEmpty>No vehicle found.</CommandEmpty>
+                  <CommandGroup>
+                    {vehicles.map((v: any) => (
+                      <CommandItem
+                        key={v._id}
+                        onSelect={() => {
+                          setForm({ ...form, vehicleId: v._id });
+                          setVehicleOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${form.vehicleId === v._id ? 'opacity-100' : 'opacity-0'}`}
+                        />
+                        {v.make} {v.model} • {v.licensePlate}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Customer Picker */}
+          <div>
+            <Label>Customer</Label>
+            <Popover open={userOpen} onOpenChange={setUserOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full flex justify-between">
+                  {form.userId
+                    ? users.find((u: any) => u._id === form.userId)?.name || 'Select user...'
+                    : 'Select or create customer...'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Search users..." />
+                  <CommandEmpty>
+                    {/* Your create user UI */}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {users.map((u: any) => (
+                      <CommandItem
+                        key={u._id}
+                        onSelect={() => {
+                          setForm({ ...form, userId: u._id });
+                          setUserOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${form.userId === u._id ? 'opacity-100' : 'opacity-0'}`}
+                        />
+                        {u.name} • {u.email}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Driver License */}
+          <div>
+            <Label>Driver License Number</Label>
+            <Input
+              type="text"
+              placeholder="e.g. DL123456"
+              value={form.driverLicense || ''}
+              onChange={(e) => setForm({ ...form, driverLicense: e.target.value })}
+              required
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Required for booking confirmation
+            </p>
+          </div>
+
+          {/* Pickup Location */}
+          <div>
+            <Label>Pickup Location</Label>
+            <Input
+              type="text"
+              placeholder="e.g. Honiara International Airport, Hotel Name, or Address"
+              value={form.pickupLocation || ''}
+              onChange={(e) => setForm({ ...form, pickupLocation: e.target.value })}
+              required
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Where the customer will pick up the vehicle
+            </p>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Vehicle</Label>
-              <Popover open={vehicleOpen} onOpenChange={setVehicleOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full flex justify-between">
-                    {form.vehicleId
-                      ? `${vehicles.find((v: any) => v._id === form.vehicleId)?.make} ${vehicles.find((v: any) => v._id === form.vehicleId)?.model
-                      }`
-                      : 'Select vehicle...'}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search vehicles..." />
-                    <CommandEmpty>No vehicle found.</CommandEmpty>
-                    <CommandGroup>
-                      {vehicles.map((v: any) => (
-                        <CommandItem
-                          key={v._id}
-                          onSelect={() => {
-                            setForm({ ...form, vehicleId: v._id });
-                            setVehicleOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={`mr-2 h-4 w-4 ${form.vehicleId === v._id ? 'opacity-100' : 'opacity-0'
-                              }`}
-                          />
-                          {v.make} {v.model} • {v.licensePlate}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* User Picker + Create */}
-            <div>
-              <Label>Customer</Label>
-              <Popover open={userOpen} onOpenChange={setUserOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full flex justify-between">
-                    {form.userId
-                      ? users.find((u: any) => u._id === form.userId)?.name || 'Select user...'
-                      : 'Select or create customer...'}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search users..." />
-                    <CommandEmpty>
-                      <div className="p-4 text-center">
-                        <p className="text-sm text-gray-500 mb-3">No user found</p>
-                        {!creatingUser ? (
-                          <Button size="sm" onClick={() => setCreatingUser(true)}>
-                            + Create New User
-                          </Button>
-                        ) : (
-                          <div className="space-y-2">
-                            <Input
-                              placeholder="Name"
-                              value={newUserName}
-                              onChange={(e) => setNewUserName(e.target.value)}
-                            />
-                            <Input
-                              placeholder="Email"
-                              value={newUserEmail}
-                              onChange={(e) => setNewUserEmail(e.target.value)}
-                            />
-                            <Button size="sm" onClick={handleCreateUser} className="w-full">
-                              Create & Select
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {users.map((u: any) => (
-                        <CommandItem
-                          key={u._id}
-                          onSelect={() => {
-                            setForm({ ...form, userId: u._id });
-                            setUserOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={`mr-2 h-4 w-4 ${form.userId === u._id ? 'opacity-100' : 'opacity-0'
-                              }`}
-                          />
-                          {u.name} • {u.email}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Dates & Status */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Start Date & Time</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>End Date & Time</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.endDate}
-                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* AVAILABILITY CHECK MESSAGE */}
-            {form.vehicleId && form.startDate && form.endDate && (
-              <div className="p-4 rounded-lg border">
-                {(() => {
-                  const selectedVehicle = vehicles.find((v: any) => v._id === form.vehicleId);
-                  if (!selectedVehicle) return null;
-
-                  const start = new Date(form.startDate);
-                  const end = new Date(form.endDate);
-
-                  // Find conflicting bookings (exclude current if editing)
-                  const conflict = bookings.find((b: any) =>
-                    b.vehicle?._id === form.vehicleId &&
-                    b._id !== editing?._id && // don't count self when editing
-                    b.status !== 'cancelled' &&
-                    new Date(b.startDate) < end &&
-                    new Date(b.endDate) > start
-                  );
-                  disableSaveButton = false;
-                  if (conflict) {
-                    disableSaveButton = true;
-                    return (
-                      <div className="flex items-start gap-3 text-red-600">
-                        <XCircle className="w-6 h-6 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-semibold">Vehicle Unavailable</p>
-                          <p className="text-sm">
-                            This vehicle is already booked from{' '}
-                            {new Date(conflict.startDate).toLocaleDateString()} to{' '}
-                            {new Date(conflict.endDate).toLocaleDateString()}.
-                          </p>
-                          <p className="text-sm mt-1">
-                            Booking Ref: #{conflict.bookingRef}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-
-                    <div className="flex items-center gap-3 text-green-600">
-                      <CheckCircle2 className="w-6 h-6 shrink-0" />
-                      <p className="font-semibold">Vehicle Available!</p>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* Deposit Input */}
-            <div>
-              <Label>Deposit Amount (SBD)</Label>
+              <Label>Start Date & Time</Label>
               <Input
-                type="number"
-                placeholder="0"
-                value={form.deposit || ''}
-                onChange={(e) => setForm({ ...form, deposit: e.target.value })}
-                min="0"
-                step="50"
+                type="datetime-local"
+                value={form.startDate}
+                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
               />
-              <p className="text-sm text-gray-500 mt-1">Amount customer pays upfront</p>
             </div>
-
-            {/* TOTAL PRICE - AUTO CALCULATED */}
-            <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-blue-900">Total Price</span>
-
-                <span className="text-3xl font-bold text-blue-700">
-                  SBD{(() => {
-                    if (!form.vehicleId || !form.startDate || !form.endDate) return '0';
-
-                    const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
-                    if (!vehicle) return '0';
-
-                    const start = new Date(form.startDate);
-                    const end = new Date(form.endDate);
-                    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-
-                    const selectedUser = users.find((u: any) => u._id === form.userId);
-                    const isMember = !!selectedUser?.isMember;
-
-                    const dailyRate = isMember && vehicle.pricePerDayMember > 0
-                      ? vehicle.pricePerDayMember
-                      : vehicle.pricePerDay;
-
-                    return (days * dailyRate).toLocaleString();
-                  })()}
-                </span>
-              </div>
-
-              {/* Rate info */}
-              {form.vehicleId && form.startDate && form.endDate && (
-                <p className="text-sm mt-2 dark:text-blue-900">
-                  {(() => {
-                    const selectedUser = users.find((u: any) => u._id === form.userId);
-                    const isMember = !!selectedUser?.isMember;
-                    const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
-
-                    if (!vehicle) return '';
-
-                    const usedDaily = isMember && vehicle.pricePerDayMember > 0
-                      ? vehicle.pricePerDayMember
-                      : vehicle.pricePerDay;
-
-                    return isMember
-                      ? `Member rate applied: SBD${usedDaily}/day`
-                      : `Regular rate: SBD${usedDaily}/day`;
-                  })()}
-                </p>
-              )}
-
-              <p className="text-sm text-blue-600 mt-1">
-                {(() => {
-                  if (!form.startDate || !form.endDate) return '';
-                  const days = Math.ceil(
-                    (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
-                    (1000 * 60 * 60 * 24)
-                  ) || 1;
-                  return `${days} day${days > 1 ? 's' : ''} × SBD${vehicles.find((v: any) => v._id === form.vehicleId)?.pricePerDay || 0
-                    }/day`;
-                })()}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Booking Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Payment Status</Label>
-                <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>End Date & Time</Label>
+              <Input
+                type="datetime-local"
+                value={form.endDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={disableSaveButton}
-            >Save Booking</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Deposit */}
+          <div>
+            <Label>Deposit Amount (SBD)</Label>
+            <Input
+              type="number"
+              placeholder="0"
+              value={form.deposit || ''}
+              onChange={(e) => setForm({ ...form, deposit: e.target.value })}
+              min="0"
+              step="50"
+            />
+            <p className="text-sm text-gray-500 mt-1">Amount customer pays upfront</p>
+          </div>
+
+          {/* Total Price */}
+          <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-blue-900">Total Price</span>
+              <span className="text-3xl font-bold text-blue-700">
+                SBD{(() => {
+                  if (!form.vehicleId || !form.startDate || !form.endDate) return '0';
+
+                  const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
+                  if (!vehicle) return '0';
+
+                  const start = new Date(form.startDate);
+                  const end = new Date(form.endDate);
+                  const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+
+                  const selectedUser = users.find((u: any) => u._id === form.userId);
+                  const isMember = !!selectedUser?.isMember;
+
+                  const dailyRate = isMember && vehicle.pricePerDayMember > 0
+                    ? vehicle.pricePerDayMember
+                    : vehicle.pricePerDay;
+
+                  return (days * dailyRate).toLocaleString();
+                })()}
+              </span>
+            </div>
+
+            {/* Rate info */}
+            {form.vehicleId && form.startDate && form.endDate && (
+              <p className="text-sm mt-2 dark:text-blue-900">
+                {(() => {
+                  const selectedUser = users.find((u: any) => u._id === form.userId);
+                  const isMember = !!selectedUser?.isMember;
+                  const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
+
+                  if (!vehicle) return '';
+
+                  const usedDaily = isMember && vehicle.pricePerDayMember > 0
+                    ? vehicle.pricePerDayMember
+                    : vehicle.pricePerDay;
+
+                  return isMember
+                    ? `Member rate applied: SBD${usedDaily}/day`
+                    : `Regular rate: SBD${usedDaily}/day`;
+                })()}
+              </p>
+            )}
+
+            <p className="text-sm text-blue-600 mt-1">
+              {(() => {
+                if (!form.startDate || !form.endDate) return '';
+                const days = Math.ceil(
+                  (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
+                  (1000 * 60 * 60 * 24)
+                ) || 1;
+                return `${days} day${days > 1 ? 's' : ''} × SBD${vehicles.find((v: any) => v._id === form.vehicleId)?.pricePerDay || 0}/day`;
+              })()}
+            </p>
+          </div>
+
+          {/* Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Booking Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Payment Status</Label>
+              <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Availability message - full width below columns */}
+      {form.vehicleId && form.startDate && form.endDate && (
+        <div className="mt-6 p-4 rounded-lg border">
+          {(() => {
+            const selectedVehicle = vehicles.find((v: any) => v._id === form.vehicleId);
+            if (!selectedVehicle) return null;
+
+            const start = new Date(form.startDate);
+            const end = new Date(form.endDate);
+
+            const conflict = bookings.find((b: any) =>
+              b.vehicle?._id === form.vehicleId &&
+              b._id !== editing?._id &&
+              b.status !== 'cancelled' &&
+              new Date(b.startDate) < end &&
+              new Date(b.endDate) > start
+            );
+
+            const disableSaveButton = !!conflict;
+
+            if (conflict) {
+              return (
+                <div className="flex items-start gap-3 text-red-600">
+                  <XCircle className="w-6 h-6 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Vehicle Unavailable</p>
+                    <p className="text-sm">
+                      This vehicle is already booked from{' '}
+                      {new Date(conflict.startDate).toLocaleDateString()} to{' '}
+                      {new Date(conflict.endDate).toLocaleDateString()}.
+                    </p>
+                    <p className="text-sm mt-1">
+                      Booking Ref: #{conflict.bookingRef}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle2 className="w-6 h-6 shrink-0" />
+                <p className="font-semibold">Vehicle Available!</p>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setOpen(false)}>
+        Cancel
+      </Button>
+      <Button
+        onClick={handleSubmit}
+        disabled={disableSaveButton}
+      >
+        Save Booking
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 
       {/* Delete Confirmation Modal */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
