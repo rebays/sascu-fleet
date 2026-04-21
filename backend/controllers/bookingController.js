@@ -83,6 +83,9 @@ const createBooking = catchAsync(async (req, res) => {
     totalPrice,
     deposit: 0,
     balance: totalPrice,
+    driversLicense: licenseNumber,
+    pickupLocation,
+    note: additionalNotes,
     status: "pending",
   });
 
@@ -367,37 +370,47 @@ const sendInvoiceEmail = catchAsync(async (req, res) => {
       },
     });
 
-    // Email
-    await transporter.sendMail({
-      from: `"SASCU Rentals" <${process.env.SMTP_USER}>`,
-      to: booking.user.email,
-      cc: "gsaemane@flysolomons.com",
-      subject: `Invoice #${booking.bookingRef} - Vehicle Booking`,
-      html: `
-        <h2>Hi ${booking.user.name},</h2>
-        <p>Thank you for your booking! Please find your invoice attached.</p>
-        <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-        <p><strong>Vehicle:</strong> ${booking.vehicle.make} ${
-        booking.vehicle.model
-      }</p>
-        <p><strong>Total Amount:</strong> SBD${booking.totalPrice}</p>
-        <p><strong>Amount Paid:</strong> SBD${booking.deposit || 0}</p>
-        <p><strong>Balance Due:</strong> SBD${
-          booking.balance || booking.totalPrice
+    try {
+      // Email
+      await transporter.sendMail({
+        from: `"SASCU Rentals" <${process.env.SMTP_USER}>`,
+        to: booking.user.email,
+        cc: "gsaemane@flysolomons.com",
+        subject: `Invoice #${booking.bookingRef} - Vehicle Booking`,
+        html: `
+          <h2>Hi ${booking.user.name},</h2>
+          <p>Thank you for your booking! Please find your invoice attached.</p>
+          <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
+          <p><strong>Vehicle:</strong> ${booking.vehicle.make} ${
+          booking.vehicle.model
         }</p>
-        <br>
-        <p>Best regards,<br>SASCU Rentals Team</p>
-        <p>Please come back soon!</p>
-      `,
-      attachments: [
-        {
-          filename: `Invoice-${booking.bookingRef}.pdf`,
-          content: pdfBuffer,
-        },
-      ],
-    });
+          <p><strong>Total Amount:</strong> SBD${booking.totalPrice}</p>
+          <p><strong>Amount Paid:</strong> SBD${booking.deposit || 0}</p>
+          <p><strong>Balance Due:</strong> SBD${
+            booking.balance || booking.totalPrice
+          }</p>
+          <br>
+          <p>Best regards,<br>SASCU Rentals Team</p>
+          <p>Please come back soon!</p>
+        `,
+        attachments: [
+          {
+            filename: `Invoice-${booking.bookingRef}.pdf`,
+            content: pdfBuffer,
+          },
+        ],
+      });
 
-    res.json({ success: true, message: "Invoice sent successfully!" });
+      res.json({ success: true, message: "Invoice sent successfully!" });
+    } catch (emailError) {
+      console.error("Email dispatch failed:", emailError);
+      // Return 500 but don't crash the server
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to dispatch invoice email. Please check SMTP settings.",
+        error: emailError.message 
+      });
+    }
   });
 
   // PDF Design
@@ -470,20 +483,29 @@ const sendReceiptEmail = catchAsync(async (req, res) => {
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
 
-    await transporter.sendMail({
-      from: `"SASCU Rentals" <${process.env.SMTP_USER}>`,
-      to: booking.user.email,
-      cc: 'gsaemane@flysolomons.com',
-      subject: `Payment Receipt - ${booking.bookingRef}`,
-      html: `
-        <h2>Hi ${booking.user.name},</h2>
-        <p>Thank you for your payment. Please find your receipt attached.</p>
-        <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-      `,
-      attachments: [{ filename: `Receipt-${booking.bookingRef}.pdf`, content: pdfBuffer }],
-    });
+    try {
+      await transporter.sendMail({
+        from: `"SASCU Rentals" <${process.env.SMTP_USER}>`,
+        to: booking.user.email,
+        cc: 'gsaemane@flysolomons.com',
+        subject: `Payment Receipt - ${booking.bookingRef}`,
+        html: `
+          <h2>Hi ${booking.user.name},</h2>
+          <p>Thank you for your payment. Please find your receipt attached.</p>
+          <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
+        `,
+        attachments: [{ filename: `Receipt-${booking.bookingRef}.pdf`, content: pdfBuffer }],
+      });
 
-    res.json({ success: true, message: 'Receipt sent successfully!' });
+      res.json({ success: true, message: 'Receipt sent successfully!' });
+    } catch (emailError) {
+      console.error("Receipt email dispatch failed:", emailError);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to dispatch receipt email. Please check SMTP settings.",
+        error: emailError.message 
+      });
+    }
   });
 
   docR.fontSize(20).text('RECEIPT', { align: 'center' });

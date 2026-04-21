@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const catchAsync = require('../utils/catchAsync');
 
 const getMe = catchAsync(async (req, res) => {
@@ -120,4 +121,28 @@ const deleteUser = catchAsync(async (req, res) => {
   });
 });
 
-module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser,toggleMembership };
+const updatePassword = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current and new password are required' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  const user = await User.findById(req.user.id);
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Invalid current password' });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
+  await user.save();
+
+  res.json({ success: true, message: 'Password updated successfully' });
+});
+
+module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser, toggleMembership, updatePassword };

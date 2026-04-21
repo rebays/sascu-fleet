@@ -9,6 +9,7 @@ import {
   Users,
   BarChart3,
   LogOut,
+  Settings,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 
@@ -17,6 +18,7 @@ const menuItems = [
   { href: "/bookings", label: "Bookings", icon: Receipt },
   { href: "/vehicles", label: "Vehicles", icon: Car },
   { href: "/customers", label: "Customers", icon: Users },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {
