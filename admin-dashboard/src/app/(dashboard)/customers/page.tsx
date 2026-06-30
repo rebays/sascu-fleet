@@ -117,7 +117,7 @@ export default function CustomersPage() {
     })
       .then(() => {
         toast.success('Customer deleted');
-        mutate('/users');
+        mutate('/users/all');
       })
       .catch(() => toast.error('Failed to delete'));
   };
@@ -375,8 +375,4 @@ export default function CustomersPage() {
     </div>
 
   );
-}
-
-function then(arg0: () => void) {
-  throw new Error('Function not implemented.');
 }
