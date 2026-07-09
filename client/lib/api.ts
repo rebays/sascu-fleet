@@ -413,8 +413,8 @@ export async function trackBooking(
 }
 
 /**
- * Get booked dates for a vehicle
- * Maps to: GET /api/vehicles/:id/booked-dates
+ * Get confirmed booked dates for a vehicle (pending bookings don't block dates)
+ * Maps to: GET /api/vehicles/:id/bookings/confirmed
  */
 export interface BookedDate {
   startDate: string;
@@ -432,12 +432,15 @@ export async function getBookedDates(
   vehicleId: string
 ): Promise<BookedDatesResponse> {
   try {
-    const response = await fetch(`${API_URL}/vehicles/${vehicleId}/bookings`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${API_URL}/vehicles/${vehicleId}/bookings/confirmed`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
