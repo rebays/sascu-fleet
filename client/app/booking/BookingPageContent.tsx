@@ -8,7 +8,11 @@ import {
   createBooking,
   type GuestBookingData,
 } from "@/lib/api";
-import { formatCurrency, calculateDays } from "@/lib/utils";
+import {
+  formatCurrency,
+  calculateDays,
+  dateInputPickerOnlyProps,
+} from "@/lib/utils";
 import { VEHICLE_TYPE_DISPLAY } from "@/lib/constants";
 import type { VehicleDisplay } from "@/lib/types";
 import {
@@ -35,6 +39,18 @@ export function BookingPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pickupDate, setPickupDate] = useState(startDate || "");
+  const [returnDate, setReturnDate] = useState(endDate || "");
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const handlePickupDateChange = (value: string) => {
+    setPickupDate(value);
+    // Keep the return date valid: it can never be before the pickup date
+    if (returnDate && value && returnDate < value) {
+      setReturnDate(value);
+    }
+  };
 
   useEffect(() => {
     async function fetchVehicle() {
@@ -54,7 +70,8 @@ export function BookingPageContent() {
     fetchVehicle();
   }, [vehicleId]);
 
-  const days = startDate && endDate ? calculateDays(startDate, endDate) : 1;
+  const days =
+    pickupDate && returnDate ? calculateDays(pickupDate, returnDate) : 1;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -262,8 +279,10 @@ export function BookingPageContent() {
                     type="date"
                     id="pickupDate"
                     name="pickupDate"
-                    defaultValue={startDate || ""}
-                    min="2026-01-02"
+                    value={pickupDate}
+                    onChange={(e) => handlePickupDateChange(e.target.value)}
+                    min={today}
+                    {...dateInputPickerOnlyProps}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     required
                   />
@@ -279,8 +298,10 @@ export function BookingPageContent() {
                     type="date"
                     id="returnDate"
                     name="returnDate"
-                    defaultValue={endDate || ""}
-                    min="2026-01-02"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    min={pickupDate || today}
+                    {...dateInputPickerOnlyProps}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     required
                   />
@@ -377,7 +398,7 @@ export function BookingPageContent() {
           </div>
 
           {/* Pricing Summary */}
-          {startDate && endDate && (
+          {pickupDate && returnDate && (
             <div className="bg-card border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="h-5 w-5 text-primary" />
@@ -386,11 +407,11 @@ export function BookingPageContent() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Pickup</span>
-                  <span className="font-medium">{startDate}</span>
+                  <span className="font-medium">{pickupDate}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Return</span>
-                  <span className="font-medium">{endDate}</span>
+                  <span className="font-medium">{returnDate}</span>
                 </div>
                 <div className="flex justify-between text-sm pb-3 border-b">
                   <span className="text-muted-foreground">Duration</span>
