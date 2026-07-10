@@ -214,14 +214,6 @@ const deleteVehicle = catchAsync(async (req, res) => {
     });
   }
 
-  // Optional: Delete images from Cloudinary if needed
-  // if (vehicle.images) {
-  //   vehicle.images.forEach((imageUrl) => {
-  //     const publicId = imageUrl.split('/').pop().split('.')[0];
-  //     cloudinary.uploader.destroy(publicId);
-  //   });
-  // }
-
   res.json({
     message: "Vehicle deleted successfully",
     vehicle,

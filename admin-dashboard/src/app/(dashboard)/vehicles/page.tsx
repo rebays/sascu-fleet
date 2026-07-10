@@ -14,8 +14,6 @@ import toast from 'react-hot-toast';
 import Image from 'next/image';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
-const UPLOAD_MODE = process.env.NEXT_PUBLIC_UPLOAD_MODE || 'local';
-
 interface Vehicle {
   _id: string;
   make: string;
@@ -73,29 +71,12 @@ export default function VehiclesPage() {
       if (!file.type.startsWith('image/')) continue;
 
       try {
-        let url = '';
-
-        if (UPLOAD_MODE === 'cloudinary') {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-
-          const res = await fetch(
-            `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-            { method: 'POST', body: formData }
-          );
-          const data = await res.json();
-          url = data.secure_url;
-        } else {
-          // Local upload
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
-          const data = await res.json();
-          url = data.url;
-        }
-
-        if (url) newImages.push(url);
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.url) newImages.push(data.url);
       } catch (err) {
         toast.error('Upload failed');
       }
@@ -231,9 +212,6 @@ export default function VehiclesPage() {
               className="pl-10 w-96"
             />
           </div>
-          <span className="text-sm text-gray-500">
-            Upload: <strong>{UPLOAD_MODE === 'cloudinary' ? 'Cloudinary' : 'Local'}</strong>
-          </span>
           <div className="flex rounded-lg  ">
             <Button
               variant={viewMode === 'card' ? 'default' : 'outline'}
