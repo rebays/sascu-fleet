@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { getVehicles } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, dateInputPickerOnlyProps } from "@/lib/utils";
 import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
 import type { VehicleDisplay } from "@/lib/types";
 import {
@@ -51,6 +51,18 @@ export default function Home() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState<VehicleDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchStartDate, setSearchStartDate] = useState("");
+  const [searchEndDate, setSearchEndDate] = useState("");
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const handleStartDateChange = (value: string) => {
+    setSearchStartDate(value);
+    // Keep the return date valid: it can never be before the pickup date
+    if (searchEndDate && value && searchEndDate < value) {
+      setSearchEndDate(value);
+    }
+  };
 
   useEffect(() => {
     async function fetchVehicles() {
@@ -138,6 +150,10 @@ export default function Home() {
                         type="date"
                         id="startDate"
                         name="startDate"
+                        value={searchStartDate}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
+                        min={today}
+                        {...dateInputPickerOnlyProps}
                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         required
                       />
@@ -155,6 +171,10 @@ export default function Home() {
                         type="date"
                         id="endDate"
                         name="endDate"
+                        value={searchEndDate}
+                        onChange={(e) => setSearchEndDate(e.target.value)}
+                        min={searchStartDate || today}
+                        {...dateInputPickerOnlyProps}
                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         required
                       />

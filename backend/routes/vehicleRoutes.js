@@ -1,6 +1,6 @@
 
 const express = require('express');
-const { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, createVehicle,updateVehicle,deleteVehicle } = require('../controllers/vehicleController');
+const { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, getConfirmedBookingDatesForVehicle, createVehicle,updateVehicle,deleteVehicle } = require('../controllers/vehicleController');
 const { protect } = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/', getVehicles);
 router.get('/available', getAvailableVehiclesByDateRange);
 router.get('/:id/bookings', getBookingDatesForVehicle);
+router.get('/:id/bookings/confirmed', getConfirmedBookingDatesForVehicle);
 router.get('/:id', getVehicleById);
 
 

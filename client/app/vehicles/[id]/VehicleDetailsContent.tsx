@@ -12,7 +12,7 @@ import {
   type BookedDate,
 } from "@/lib/api";
 import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, dateInputPickerOnlyProps } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
 import {
   Car,
@@ -112,6 +112,14 @@ export function VehicleDetailsContent({ id }: { id: string }) {
       setDateConflict(null);
     }
   }, [startDate, endDate, bookedDates]);
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    // Keep the end date valid: it can never be before the start date
+    if (endDate && value && endDate < value) {
+      setEndDate(value);
+    }
+  };
 
   const handleBookNow = () => {
     if (!startDate || !endDate) {
@@ -367,7 +375,8 @@ export function VehicleDetailsContent({ id }: { id: string }) {
                 id="startDate"
                 name="startDate"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                {...dateInputPickerOnlyProps}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 min={new Date().toISOString().split("T")[0]}
                 required
@@ -388,6 +397,7 @@ export function VehicleDetailsContent({ id }: { id: string }) {
                 name="endDate"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                {...dateInputPickerOnlyProps}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 min={startDate || new Date().toISOString().split("T")[0]}
                 required

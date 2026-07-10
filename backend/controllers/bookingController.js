@@ -37,7 +37,7 @@ const createBooking = catchAsync(async (req, res) => {
 
   const existingBooking = await Booking.findOne({
     vehicle: vehicleId,
-    status: { $in: ["pending", "confirmed"] },
+    status: "confirmed",
     $or: [{ startDate: { $lt: endDate }, endDate: { $gt: startDate } }],
   });
 
@@ -194,7 +194,7 @@ const createBookingAdmin = catchAsync(async (req, res) => {
   // Check if vehicle is already booked
   const conflictingBooking = await Booking.findOne({
     vehicle,
-    status: { $in: ["pending", "confirmed"] },
+    status: "confirmed",
     $or: [{ startDate: { $lt: endDate }, endDate: { $gt: startDate } }],
   });
 
@@ -238,7 +238,7 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
     const existing = await Booking.findOne({
       _id: { $ne: id }, // exclude current booking
       vehicle,
-      status: { $in: ["pending", "confirmed"] },
+      status: "confirmed",
       $or: [
         {
           startDate: { $lt: endDate || new Date().toISOString() },
@@ -539,6 +539,30 @@ const updateBookingStatus = catchAsync(async (req, res) => {
   const booking = await Booking.findById(id);
   if (!booking) {
     return res.status(404).json({ message: "Booking not found" });
+  }
+
+  // Pending bookings may overlap each other, so confirmation is the point
+  // where double-booking must be prevented
+  if (status === "confirmed") {
+    const conflictingBooking = await Booking.findOne({
+      _id: { $ne: booking._id },
+      vehicle: booking.vehicle,
+      status: "confirmed",
+      $or: [
+        { startDate: { $lt: booking.endDate }, endDate: { $gt: booking.startDate } },
+      ],
+    });
+
+    if (conflictingBooking) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot confirm: vehicle already has a confirmed booking (${conflictingBooking.bookingRef}) from ${new Date(
+          conflictingBooking.startDate
+        ).toLocaleDateString()} to ${new Date(
+          conflictingBooking.endDate
+        ).toLocaleDateString()}`,
+      });
+    }
   }
 
   // Record in history

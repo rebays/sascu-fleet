@@ -29,7 +29,7 @@ const searchAvailableVehicles = catchAsync(async (req, res) => {
   }
 
   const bookedVehicles = await Booking.find({
-    status: { $in: ["pending", "confirmed"] },
+    status: "confirmed",
     $or: [{ startDate: { $lt: endDate }, endDate: { $gt: startDate } }],
   }).distinct("vehicle");
 
@@ -70,7 +70,7 @@ const getAvailableVehiclesByDateRange = catchAsync(async (req, res) => {
 
   // Find bookings that overlap the requested range and are active
   const conflictingBookings = await Booking.find({
-    status: { $in: ['pending', 'confirmed'] },
+    status: 'confirmed',
     $or: [
       { startDate: { $lte: end }, endDate: { $gte: start } }
     ]
@@ -105,6 +105,43 @@ const getBookingDatesForVehicle = catchAsync(async (req, res) => {
   const bookings = await Booking.find({
     vehicle: id,
     status: { $in: ['pending', 'confirmed'] },
+    $or: [
+      { startDate: { $lte: to }, endDate: { $gte: from } }
+    ]
+  }).select('startDate endDate bookingRef status').sort('startDate').lean();
+
+  // Normalize ranges into the requested window
+  const ranges = bookings.map(b => ({
+    bookingRef: b.bookingRef,
+    status: b.status,
+    startDate: new Date(Math.max(new Date(b.startDate), from)),
+    endDate: new Date(Math.min(new Date(b.endDate), to))
+  }));
+
+  res.json({ success: true, data: ranges });
+});
+
+// Same as getBookingDatesForVehicle but only returns confirmed bookings —
+// used by the public client so pending bookings don't block new requests
+const getConfirmedBookingDatesForVehicle = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const from = new Date();
+  from.setDate(from.getDate() + 1);
+  from.setHours(0,0,0,0);
+
+  const to = new Date(from);
+  to.setMonth(to.getMonth() + 3);
+  to.setHours(23,59,59,999);
+
+  // Verify vehicle exists
+  const vehicle = await Vehicle.findById(id);
+  if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
+
+  // Find confirmed bookings for this vehicle that overlap the window
+  const bookings = await Booking.find({
+    vehicle: id,
+    status: 'confirmed',
     $or: [
       { startDate: { $lte: to }, endDate: { $gte: from } }
     ]
@@ -191,4 +228,4 @@ const deleteVehicle = catchAsync(async (req, res) => {
   });
 });
 
-module.exports = { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, createVehicle,deleteVehicle,updateVehicle };
+module.exports = { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, getConfirmedBookingDatesForVehicle, createVehicle,deleteVehicle,updateVehicle };
