@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Car } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -49,8 +49,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <Car className="w-10 h-10 text-white" />
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <Image src="/sascu-logo-ori.png" alt="SASCU" fill className="object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">SASCU</h1>
           <p className="text-gray-600 mt-2">Vehicle Rental Management</p>

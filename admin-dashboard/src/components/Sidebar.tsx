@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Car,
@@ -29,8 +30,8 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-white dark:bg-slate-900 text-gray-900 dark:text-white flex flex-col print:hidden border-r border-gray-200 dark:border-slate-800">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-200 dark:border-slate-800">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-lg shrink-0">
-          S
+        <div className="relative w-9 h-9 shrink-0">
+          <Image src="/sascu-logo-ori.png" alt="SASCU" fill className="object-contain" priority />
         </div>
         <div className="min-w-0">
           <h1 className="text-base font-bold leading-tight">SASCU</h1>
