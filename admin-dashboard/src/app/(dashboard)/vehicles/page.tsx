@@ -102,7 +102,7 @@ export default function VehiclesPage() {
       year: Number(form.year),
       pricePerHour: Number(form.pricePerHour),
       pricePerDay: Number(form.pricePerDay),
-      images: images.length > 0 ? images : undefined
+      images
     };
 
     console.log('Submitting vehicle:');

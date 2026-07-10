@@ -6,6 +6,19 @@
 const Vehicle = require('../models/Vehicle');
 const Booking = require('../models/Booking');
 const catchAsync = require('../utils/catchAsync');
+const { del } = require('@vercel/blob');
+
+// Vercel Blob only accepts URLs it hosts; legacy Cloudinary URLs are skipped.
+const deleteBlobImages = async (urls = []) => {
+  const blobUrls = urls.filter((u) => typeof u === 'string' && u.includes('.blob.vercel-storage.com'));
+  if (blobUrls.length === 0) return;
+
+  try {
+    await del(blobUrls);
+  } catch (err) {
+    console.error('Failed to delete blob image(s):', err.message);
+  }
+};
 
 const getVehicles = catchAsync(async (req, res) => {
   const vehicles = await Vehicle.find();
@@ -172,6 +185,8 @@ const updateVehicle = catchAsync(async (req, res) => {
   delete updates.__v;
   delete updates.createdAt;
 
+  const previousVehicle = updates.images ? await Vehicle.findById(id).select('images').lean() : null;
+
   const vehicle = await Vehicle.findByIdAndUpdate(
     id,
     { $set: updates },
@@ -182,6 +197,12 @@ const updateVehicle = catchAsync(async (req, res) => {
     return res.status(404).json({
       message: "Vehicle not found",
     });
+  }
+
+  // Clean up any photos that were replaced/removed in this update
+  if (previousVehicle?.images?.length) {
+    const removedImages = previousVehicle.images.filter((url) => !updates.images.includes(url));
+    await deleteBlobImages(removedImages);
   }
 
   res.json({
@@ -213,6 +234,8 @@ const deleteVehicle = catchAsync(async (req, res) => {
       message: "Vehicle not found",
     });
   }
+
+  await deleteBlobImages(vehicle.images);
 
   res.json({
     message: "Vehicle deleted successfully",
