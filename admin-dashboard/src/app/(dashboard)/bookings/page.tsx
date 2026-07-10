@@ -46,7 +46,6 @@ import {
   List,
   Grid3x3,
   Search,
-  Download,
   Eye,
   Loader,
   ChevronLeft,
@@ -339,50 +338,6 @@ export default function AdminBookingsPage() {
     }
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
-    const headers = [
-      'Booking Ref',
-      'Customer Name',
-      'Email',
-      'Vehicle',
-      'Start Date',
-      'End Date',
-      'Total Price',
-      'Deposit',
-      'Balance',
-      'Status',
-      'Payment Status',
-    ];
-
-    const rows = filtered.map((b: any) => [
-      b.bookingRef,
-      b.user?.name || 'N/A',
-      b.user?.email || 'N/A',
-      `${b.vehicle?.make || ''} ${b.vehicle?.model || ''}`.trim(),
-      formatDate(b.startDate),
-      formatDate(b.endDate),
-      b.totalPrice,
-      b.status,
-      b.paymentStatus,
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row: any[]) => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `bookings-export-${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   if (bLoading) return <div className="text-center py-20 "><Loader className="animate-spin flex w-6 h-6 mx-auto" />Loading bookings...</div>;
   if (vLoading || uLoading) return <div className="text-center py-20">Loading support data...</div>
   if (bError || vError || uError) return <div className="text-center py-20 text-red-600">Failed to load bookings</div>;
@@ -465,11 +420,6 @@ export default function AdminBookingsPage() {
               <List className="w-4 h-4" />
             </Button>
           </div>
-          {/* Export + New Booking */}
-          <Button className="flex items-center cursor-pointer" variant="outline" onClick={exportToCSV}>
-            <Download className="w-5 h-5 mr-2" />
-            Export CSV
-          </Button>
           <Button className="flex items-center" onClick={openCreateModal}>
             <Plus className="w-5 h-5 mr-2" />
             New Booking

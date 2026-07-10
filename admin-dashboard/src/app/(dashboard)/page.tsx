@@ -18,7 +18,7 @@ import {
 import { format, subDays } from 'date-fns';
 import { useTheme } from 'next-themes';
 import useSWR from 'swr';
-import { fetcher } from '@/lib/api';
+import api, { fetcher } from '@/lib/api';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import {
@@ -105,6 +105,8 @@ export default function DashboardPage() {
       : [];
   }, [stats]);
 
+  const [exporting, setExporting] = useState(false);
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateRange((prev) => ({
       ...prev,
@@ -112,8 +114,21 @@ export default function DashboardPage() {
     }));
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!stats) return toast.error('No data to export');
+
+    setExporting(true);
+    let bookings: any[] = [];
+    try {
+      const res = await api.get(
+        `/reports/bookings-export?start=${dateRange.start}&end=${dateRange.end}`
+      );
+      bookings = res.data.data || [];
+    } catch {
+      toast.error('Failed to load booking details for export');
+      setExporting(false);
+      return;
+    }
 
     const wb = XLSX.utils.book_new();
 
@@ -138,8 +153,51 @@ export default function DashboardPage() {
       XLSX.utils.book_append_sheet(wb, revenueSheet, 'Daily Revenue');
     }
 
-    XLSX.writeFile(wb, `dashboard-report-${format(today, 'yyyy-MM-dd')}.xlsx`);
+    // Bookings — one row per booking, with customer + vehicle + totals
+    const bookingRows = bookings.map((b: any) => ({
+      'Booking Ref': b.bookingRef,
+      Status: b.status,
+      'Payment Status': b.paymentStatus,
+      'Rental Zone': b.locationType === 'out-of-town' ? 'Out of Town' : 'In Town',
+      Customer: b.customer.name,
+      Email: b.customer.email,
+      Phone: b.customer.phone,
+      Vehicle: `${b.vehicle.make} ${b.vehicle.model}`.trim(),
+      'License Plate': b.vehicle.licensePlate,
+      'Start Date': format(new Date(b.startDate), 'yyyy-MM-dd HH:mm'),
+      'End Date': format(new Date(b.endDate), 'yyyy-MM-dd HH:mm'),
+      'Total Price': b.totalPrice,
+      Deposit: b.deposit,
+      Balance: b.balance,
+      'Pickup Location': b.pickupLocation || '',
+      "Driver's License": b.driversLicense || '',
+      'Booked On': format(new Date(b.createdAt), 'yyyy-MM-dd HH:mm'),
+    }));
+    if (bookingRows.length > 0) {
+      const wsBookings = XLSX.utils.json_to_sheet(bookingRows);
+      XLSX.utils.book_append_sheet(wb, wsBookings, 'Bookings');
+    }
+
+    // Payments — one row per transaction, cross-referenced by Booking Ref
+    const paymentRows = bookings.flatMap((b: any) =>
+      b.payments.map((p: any) => ({
+        'Booking Ref': b.bookingRef,
+        Customer: b.customer.name,
+        Amount: p.amount,
+        Method: p.paymentMethod,
+        Status: p.status,
+        'Recorded At': format(new Date(p.createdAt), 'yyyy-MM-dd HH:mm'),
+        Notes: p.notes || '',
+      }))
+    );
+    if (paymentRows.length > 0) {
+      const wsPayments = XLSX.utils.json_to_sheet(paymentRows);
+      XLSX.utils.book_append_sheet(wb, wsPayments, 'Payments');
+    }
+
+    XLSX.writeFile(wb, `dashboard-report-${dateRange.start}-to-${dateRange.end}.xlsx`);
     toast.success('Report exported to Excel');
+    setExporting(false);
   };
 
   if (isLoading) {
@@ -205,9 +263,13 @@ export default function DashboardPage() {
             />
           </div>
 
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
+          <Button onClick={exportToExcel} variant="outline" disabled={exporting}>
+            {exporting ? (
+              <Loader className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            {exporting ? 'Exporting...' : 'Export Excel'}
           </Button>
         </div>
       </div>

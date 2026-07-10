@@ -6,6 +6,7 @@ const {
   getTopVehicles,
   exportBookings,
   getRevenueByVehicleType,
+  getBookingsExport,
 } = require('../controllers/reportController');
 const { protect } = require('../middleware/auth');
 const admin = require('../middleware/admin');
@@ -19,5 +20,6 @@ router.get('/revenue', getRevenueReport);
 router.get('/revenue-by-type', getRevenueByVehicleType);
 router.get('/top-vehicles', getTopVehicles);
 router.get('/export-csv', exportBookings);
+router.get('/bookings-export', getBookingsExport);
 
 module.exports = router;

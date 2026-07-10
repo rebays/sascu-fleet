@@ -263,6 +263,68 @@ const getTopVehicles = catchAsync(async (req, res) => {
   res.json(topVehicles);
 });
 
+// Full booking detail (customer + itemized payments) for a date range —
+// backs the admin dashboard's "Export Excel" button.
+const getBookingsExport = catchAsync(async (req, res) => {
+  const { start, end } = req.query;
+
+  const endDate = end ? new Date(end) : new Date();
+  const startDate = start ? new Date(start) : new Date(endDate);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
+  const bookings = await Booking.find({ createdAt: { $gte: startDate, $lte: endDate } })
+    .populate("user", "name email phone")
+    .populate("vehicle", "make model licensePlate type")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const payments = await Payment.find({ booking: { $in: bookings.map((b) => b._id) } })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  const paymentsByBooking = payments.reduce((acc, p) => {
+    const key = p.booking.toString();
+    (acc[key] = acc[key] || []).push(p);
+    return acc;
+  }, {});
+
+  const data = bookings.map((b) => ({
+    bookingRef: b.bookingRef,
+    status: b.status,
+    paymentStatus: b.paymentStatus,
+    locationType: b.locationType,
+    startDate: b.startDate,
+    endDate: b.endDate,
+    totalPrice: b.totalPrice,
+    deposit: b.deposit,
+    balance: b.balance,
+    pickupLocation: b.pickupLocation,
+    driversLicense: b.driversLicense,
+    createdAt: b.createdAt,
+    customer: {
+      name: b.user?.name || "N/A",
+      email: b.user?.email || "N/A",
+      phone: b.user?.phone || "",
+    },
+    vehicle: {
+      make: b.vehicle?.make || "",
+      model: b.vehicle?.model || "",
+      licensePlate: b.vehicle?.licensePlate || "",
+      type: b.vehicle?.type || "",
+    },
+    payments: (paymentsByBooking[b._id.toString()] || []).map((p) => ({
+      amount: p.amount,
+      paymentMethod: p.paymentMethod,
+      status: p.status,
+      createdAt: p.createdAt,
+      notes: p.notes || "",
+    })),
+  }));
+
+  res.json({ success: true, count: data.length, dateRange: { start: startDate, end: endDate }, data });
+});
+
 // Export bookings to CSV
 const exportBookings = catchAsync(async (req, res) => {
   const bookings = await Booking.find()
@@ -311,4 +373,5 @@ module.exports = {
   getRevenueByVehicleType,
   getTopVehicles,
   exportBookings,
+  getBookingsExport,
 };
