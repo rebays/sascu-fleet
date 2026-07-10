@@ -12,6 +12,7 @@ import useSWR, { mutate } from 'swr';
 import fetcher from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const UPLOAD_MODE = process.env.NEXT_PUBLIC_UPLOAD_MODE || 'local';
 
@@ -45,6 +46,7 @@ export default function VehiclesPage() {
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
+  const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
 
   //Search functionality
   const filtered = useMemo(() => {
@@ -150,6 +152,29 @@ export default function VehiclesPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!vehicleToDelete) return;
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/vehicles/${vehicleToDelete._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message);
+      }
+
+      toast.success('Vehicle deleted');
+      mutate('/vehicles');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete vehicle');
+    } finally {
+      setVehicleToDelete(null);
+    }
+  };
+
   const openEdit = (v: Vehicle) => {
     setEditingVehicle(v);
     setForm({
@@ -208,40 +233,60 @@ export default function VehiclesPage() {
 
       {/* CARD VIEW */}
       {viewMode === 'card' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((v: any) => (
-            <Card key={v._id} className="overflow-hidden hover:shadow-xl transition">
+            <Card key={v._id} className="group overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600">
+              {/* Image + availability */}
+              <div className="relative">
+                {v.images?.[0] ? (
+                  <Image src={v.images[0]} alt={v.model} width={400} height={300} className="w-full h-44 object-cover" />
+                ) : (
+                  <div className="w-full h-44 bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                    <Car className="w-12 h-12 text-gray-300 dark:text-slate-500" />
+                  </div>
+                )}
+                <Badge variant={v.isAvailable ? 'success' : 'destructive'} className="absolute top-3 right-3 shadow-sm">
+                  {v.isAvailable ? 'Available' : 'Booked'}
+                </Badge>
+              </div>
 
-              {v.images?.[0] ? (
-                <Image src={v.images[0]} alt={v.model} width={400} height={300} className="w-full h-48 object-cover" />
-              ) : (
-                <div className="bg-gray-200 border-2 border-dashed rounded-t-xl w-full h-48 flex items-center justify-center">
-                  <Car className="w-16 h-16 text-gray-400" />
+              <div className="p-5">
+                {/* Name + plate */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold truncate">{v.make} {v.model}</h3>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">{v.year}</p>
+                  </div>
+                  <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 shrink-0">
+                    {v.licensePlate}
+                  </span>
                 </div>
-              )}
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2">{v.make} {v.model} ({v.year})</h3>
-                <p className="text-gray-600 mb-4">License: <strong>{v.licensePlate}</strong></p>
-                <div className="text-sm space-y-1">
-                  <span className='font-medium text-blue-600'>RATES</span>
-                  <p>Regular: 
-                    
-                    <strong>SBD{v.pricePerHour}/hr • SBD{v.pricePerDay}/day</strong>
-                  </p>
-                  <p>Member: 
-                    
-                    <strong>SBD{v.pricePerHourMember}/hr • SBD{v.pricePerDayMember}/day</strong>
-                  </p>
-                  <hr className="my-2" />
-                  <p>Status: <Badge variant={v.isAvailable ? 'default' : 'destructive'}>
-                    {v.isAvailable ? 'Available' : 'Booked'}
-                  </Badge></p>
+
+                {/* Rates */}
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-500 dark:text-slate-400">Regular</span>
+                    <span className="font-medium">SBD{v.pricePerHour}/hr · SBD{v.pricePerDay}/day</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-500 dark:text-slate-400">Member</span>
+                    <span className="font-medium">SBD{v.pricePerHourMember}/hr · SBD{v.pricePerDayMember}/day</span>
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-6">
-                  <Button size="sm" onClick={() => openEdit(v)} className="flex">
-                    <Edit className="w-4 h-4 mr-1" /> Edit
+              </div>
+
+              {/* Footer: price + actions */}
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/30">
+                <p className="text-lg font-bold">
+                  <span className="text-xs font-medium text-gray-500 dark:text-slate-400 mr-1">SBD</span>
+                  {Number(v.pricePerDay).toLocaleString()}
+                  <span className="text-xs font-normal text-gray-500 dark:text-slate-400">/day</span>
+                </p>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" title="Edit" onClick={() => openEdit(v)}>
+                    <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="destructive">
+                  <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => setVehicleToDelete(v)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -288,7 +333,7 @@ export default function VehiclesPage() {
                       <Button size="sm" onClick={() => openEdit(v)} className="mr-2">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="destructive">
+                      <Button size="sm" variant="destructive" onClick={() => setVehicleToDelete(v)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </td>
@@ -385,6 +430,21 @@ export default function VehiclesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <ConfirmationModal
+        open={!!vehicleToDelete}
+        onOpenChange={(isOpen) => { if (!isOpen) setVehicleToDelete(null); }}
+        title="Delete Vehicle?"
+        description={
+          vehicleToDelete
+            ? `${vehicleToDelete.make} ${vehicleToDelete.model} (${vehicleToDelete.licensePlate}) will be permanently removed. This action cannot be undone.`
+            : ''
+        }
+        confirmText="Yes, Delete Vehicle"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

@@ -437,48 +437,57 @@ export default function AdminBookingsPage() {
       {/* Bookings List */}
       {/* CARD VIEW */}
       {viewMode === 'card' && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {paginatedBookings.map((b: any) => (
-            <Card key={b._id} className="p-6 hover:shadow-lg transition">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="font-bold text-lg">#{b.bookingRef}</p>
-                  <p className="text-sm text-gray-600">
-                    <User className="inline w-4 h-4 mr-1" />
-                    {b.user?.name || 'N/A'}
-                  </p>
+            <Card key={b._id} className="group overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600">
+              <div className="p-5">
+                {/* Header: ref + customer, status badges */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-mono text-gray-500 dark:text-slate-400 mb-0.5">#{b.bookingRef}</p>
+                    <p className="font-semibold truncate">{b.user?.name || 'N/A'}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <Badge variant={b.status === 'confirmed' ? 'success' : b.status === 'cancelled' ? 'destructive' : 'outline'} className="capitalize">
+                      {b.status}
+                    </Badge>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${b.paymentStatus === 'paid' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                      {b.paymentStatus === 'paid' ? 'Paid' : 'Payment pending'}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Badge variant={b.paymentStatus === 'paid' ? 'default' : 'secondary'}>
-                    {b.paymentStatus}
-                  </Badge>
-                  <Badge className="ml-2" variant={b.status === 'confirmed' ? 'success' : b.status === 'cancelled' ? 'destructive' : 'outline'}>
-                    {b.status}
-                  </Badge>
+
+                {/* Details */}
+                <div className="space-y-2 text-sm text-gray-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <Car className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
+                    <span className="truncate">{b.vehicle?.make} {b.vehicle?.model}</span>
+                    <span className="ml-auto font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
+                      {b.vehicle?.licensePlate}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
+                    <span>{formatDate(b.startDate)} → {formatDate(b.endDate)}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="flex items-center gap-2">
-                  <Car className="w-5 h-5 text-gray-500" />
-                  {b.vehicle?.make} {b.vehicle?.model} <span className="bg-amber-300 text-black px-1 rounded font-bold">{b.vehicle?.licensePlate}</span>
+              {/* Footer: price + actions */}
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/30">
+                <p className="text-lg font-bold">
+                  <span className="text-xs font-medium text-gray-500 dark:text-slate-400 mr-1">SBD</span>
+                  {Number(b.totalPrice).toLocaleString()}
                 </p>
-                <p className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-gray-500" />
-                  {formatDate(b.startDate)} → {formatDate(b.endDate)}
-                </p>
-              </div>
-
-              <div className="flex justify-between items-end mt-6">
-                <p className="text-2xl font-bold"><span className='text-xl'>SBD</span>{b.totalPrice}</p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEditModal(b)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => window.location.href = `/bookings/${b._id}`}>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" title="View" onClick={() => window.location.href = `/bookings/${b._id}`}>
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => openDeleteModal(b)}>
+                  <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(b)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => openDeleteModal(b)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -492,40 +501,45 @@ export default function AdminBookingsPage() {
       {viewMode === 'list' && (
         <Card>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b bg-gray-50 dark:bg-slate-800">
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-200 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/30">
                 <tr>
-                  <th className="text-left p-4 font-medium">Ref</th>
-                  <th className="text-left p-4 font-medium">Customer</th>
-                  <th className="text-left p-4 font-medium">Vehicle</th>
-                  <th className="text-left p-4 font-medium">Dates</th>
-                  <th className="text-left p-4 font-medium">Amount</th>
-                  <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-right p-4 font-medium">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Ref</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Customer</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Vehicle</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Dates</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Amount</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Status</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedBookings.map((b: any) => (
-                  <tr key={b._id} className="border-b hover:bg-gray-50">
-                    <td className="p-4 font-mono">#{b.bookingRef}</td>
-                    <td className="p-4">{b.user?.name || 'N/A'}</td>
-                    <td className="p-4">{b.vehicle?.make} {b.vehicle?.model} <span className="bg-amber-300 text-black px-1 rounded font-bold">{b.vehicle?.licensePlate}</span></td>
-                    <td className="p-4">
+                  <tr key={b._id} className="border-b border-gray-100 dark:border-slate-700 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-slate-400">#{b.bookingRef}</td>
+                    <td className="px-4 py-3 font-medium">{b.user?.name || 'N/A'}</td>
+                    <td className="px-4 py-3">
+                      {b.vehicle?.make} {b.vehicle?.model}{' '}
+                      <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">{b.vehicle?.licensePlate}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                       {formatDate(b.startDate)} → {formatDate(b.endDate)}
                     </td>
-                    <td className="p-4 font-bold">SBD{b.totalPrice}</td>
-                    <td className="p-4">
-                      <Badge variant={b.paymentStatus === 'paid' ? 'default' : 'secondary'}>
+                    <td className="px-4 py-3 font-semibold">SBD{Number(b.totalPrice).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={b.paymentStatus === 'paid' ? 'success' : 'secondary'} className="capitalize">
                         {b.paymentStatus}
                       </Badge>
                     </td>
-                    <td className="p-4 text-right">
-                      <Button size="sm" variant="outline" className="mr-2" onClick={() => openEditModal(b)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => openDeleteModal(b)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(b)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => openDeleteModal(b)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

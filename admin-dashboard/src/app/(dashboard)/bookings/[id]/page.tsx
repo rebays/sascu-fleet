@@ -158,7 +158,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <div className="p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative">
                   {/* Visual Line */}
-                  <div className="hidden md:block absolute top-[22px] left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200" />
+                  <div className="hidden md:block absolute top-[22px] left-1/4 right-1/4 h-0.5 bg-linear-to-r from-blue-200 via-blue-400 to-blue-200" />
                   
                   <div className="flex-1 text-center md:text-left space-y-2 z-10">
                     <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 mx-auto md:mx-0">
@@ -169,7 +169,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-xs text-slate-500">{new Date(booking.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                   </div>
 
-                  <div className="flex-shrink-0 bg-blue-50 dark:bg-slate-900 px-4 py-2 rounded-full border border-blue-100 dark:border-slate-700 z-10">
+                  <div className="shrink-0 bg-blue-50 dark:bg-slate-900 px-4 py-2 rounded-full border border-blue-100 dark:border-slate-700 z-10">
                     <span className="text-xs font-bold text-blue-700 dark:text-blue-400">
                       {Math.ceil((new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24))} Days Rental
                     </span>
@@ -243,7 +243,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     {booking.statusHistory?.map((h: any, i: number) => (
                       <div key={i} className="flex gap-4 relative">
                         {i !== booking.statusHistory.length - 1 && (
-                          <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800" />
+                          <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-slate-100 dark:bg-slate-800" />
                         )}
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white dark:bg-slate-900 z-10 ${
                           h.status === 'confirmed' ? 'border-emerald-500' : h.status === 'cancelled' ? 'border-rose-500' : 'border-blue-500'
@@ -312,7 +312,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <div className="h-2 bg-blue-600 w-full" />
               <div className="p-6 space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg">
+                  <div className="w-16 h-16 bg-linear-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg">
                     {booking.user?.name?.[0] || 'C'}
                   </div>
                   <div>
@@ -339,7 +339,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </div>
 
                   <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
-                    <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                    <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
                     <div>
                       <p className="text-[10px] text-emerald-600 uppercase font-extrabold pb-0.5">Driver's License</p>
                       <p className="text-lg font-black text-emerald-800 dark:text-emerald-400 tracking-widest leading-none">{booking.driversLicense}</p>
@@ -354,7 +354,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                {booking.vehicle?.images?.[0] ? (
                 <div className="aspect-video relative h-48">
                   <Image fill src={booking.vehicle.images[0]} alt="car" className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
                      <p className="text-white text-xl font-black italic tracking-tight">{booking.vehicle.make} {booking.vehicle.model}</p>
                   </div>
                 </div>

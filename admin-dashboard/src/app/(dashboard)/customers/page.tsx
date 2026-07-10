@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader } from 'lucide-react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/api';
 
@@ -165,57 +165,66 @@ export default function CustomersPage() {
 
       {/* CARD VIEW */}
       {viewMode === 'card' && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c: any) => (
-            <Card key={c._id} className="p-6 hover:shadow-lg transition">
-              <div className="flex justify-between items-start mb-4">
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <User className="w-8 h-8 text-blue-600" />
-
+            <Card key={c._id} className="group overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600">
+              <div className="p-5">
+                {/* Header: avatar + name, admin badge */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center text-sm font-semibold shrink-0">
+                      {(c.name || '?').split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{c.name}</h3>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${c.isMember ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-slate-400'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {c.isMember ? 'SASCU Member' : 'Non-member'}
+                      </span>
+                    </div>
+                  </div>
+                  {c.role === 'admin' && (
+                    <Badge variant="default" className="shrink-0">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Admin
+                    </Badge>
+                  )}
                 </div>
 
-                {c.role === 'admin' && (
-                  <Badge variant="default">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Admin
-                  </Badge>
-                )}
-
+                {/* Contact details */}
+                <div className="space-y-2 text-sm text-gray-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
+                    <span className="truncate">{c.email}</span>
+                  </div>
+                  {c.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
+                      <span>{c.phone}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <h3 className="font-bold text-lg">{c.name}</h3>
-              <p className='bg-purple-100 text-purple-950 w-1/2 pl-4 rounded-full font-semibold'>{c.isMember ? 'SASCU Member' : 'Non-member'}</p>
-              <p className="text-gray-600 flex items-center gap-2 mt-2">
-                <Mail className="w-4 h-4" />
-                {c.email}
-              </p>
-              {c.phone && (
-                <p className="text-gray-600 flex items-center gap-2 mt-1">
-                  <Phone className="w-4 h-4" />
-                  {c.phone}
-                </p>
-              )}
-
-
-
-              <div className="flex gap-2 mt-6">
-                {/* Membership Toggle */}
+              {/* Footer: membership toggle + actions */}
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/30">
                 <Button
                   size="sm"
-                  variant={c.isMember ? 'outline' : 'default'}
+                  variant="outline"
                   onClick={() => handleToggleMembership(c._id, !c.isMember)}
                 >
                   {c.isMember ? 'Remove Membership' : 'Make Member'}
                 </Button>
-                <Button size="sm" onClick={() => openEditModal(c)} className="flex">
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-                {c.role !== 'admin' && (
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(c._id)}>
-                    <Trash2 className="w-4 h-4" />
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(c)}>
+                    <Edit className="w-4 h-4" />
                   </Button>
-                )}
+                  {c.role !== 'admin' && (
+                    <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(c._id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
           ))}

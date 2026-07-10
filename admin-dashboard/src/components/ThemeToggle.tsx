@@ -33,14 +33,14 @@ export default function ThemeToggle() {
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <Sun
-          className={`h-8 w-8 transition-all duration-300 ${
+          className={`h-5 w-5 transition-all duration-300 ${
             theme === "dark" ? "rotate-90 scale-0" : "rotate-0 scale-100"
           }`}
         />
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
         <Moon
-          className={`h-8 w-8 transition-all duration-300 ${
+          className={`h-5 w-5 transition-all duration-300 ${
             theme === "dark" ? "rotate-0 scale-100" : "-rotate-90 scale-0"
           }`}
         />

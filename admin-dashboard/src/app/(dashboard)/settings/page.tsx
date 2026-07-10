@@ -46,19 +46,25 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
-        <p className="text-gray-600 dark:text-slate-400">Manage your account preferences and security</p>
+        <h1 className="text-xl font-semibold text-blue-900 dark:text-slate-400">Settings</h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Manage your account preferences and security</p>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex items-center gap-3">
-          <Key className="w-5 h-5 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Security</h2>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 shrink-0">
+            <Key className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Security</h2>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Update your account password</p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit}>
+          <div className="p-6 space-y-6">
           <div className="grid gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
@@ -118,15 +124,16 @@ export default function SettingsPage() {
               <span className="text-sm font-medium">{message.text}</span>
             </div>
           )}
+          </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end px-6 py-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/30">
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-all shadow-md active:scale-95"
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm rounded-lg font-medium transition-colors"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <Save className="w-4 h-4" />

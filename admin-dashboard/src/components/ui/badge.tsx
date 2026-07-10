@@ -8,7 +8,7 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
+        "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
         variant === 'default' && 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
         variant === 'success' && 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
         variant === 'secondary' && 'bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200',

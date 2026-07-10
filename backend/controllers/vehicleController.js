@@ -155,6 +155,20 @@ const updateVehicle = catchAsync(async (req, res) => {
 const deleteVehicle = catchAsync(async (req, res) => {
   const { id } = req.params;
 
+  // Block deletion while the vehicle has active or upcoming bookings
+  const activeBookings = await Booking.countDocuments({
+    vehicle: id,
+    status: { $in: ['pending', 'confirmed'] },
+    endDate: { $gte: new Date() },
+  });
+
+  if (activeBookings > 0) {
+    return res.status(409).json({
+      success: false,
+      message: `Cannot delete: this vehicle has ${activeBookings} active or upcoming booking${activeBookings > 1 ? 's' : ''}. Cancel them first.`,
+    });
+  }
+
   const vehicle = await Vehicle.findByIdAndDelete(id);
 
   if (!vehicle) {
