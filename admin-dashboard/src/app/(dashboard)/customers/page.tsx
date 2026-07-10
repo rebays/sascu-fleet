@@ -183,10 +183,10 @@ export default function CustomersPage() {
                       </span>
                     </div>
                   </div>
-                  {c.role === 'admin' && (
+                  {(c.role === 'admin' || c.role === 'superadmin') && (
                     <Badge variant="default" className="shrink-0">
                       <Shield className="w-3 h-3 mr-1" />
-                      Admin
+                      {c.role === 'superadmin' ? 'Super Admin' : 'Admin'}
                     </Badge>
                   )}
                 </div>
@@ -219,7 +219,7 @@ export default function CustomersPage() {
                   <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(c)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  {c.role !== 'admin' && (
+                  {c.role !== 'admin' && c.role !== 'superadmin' && (
                     <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(c._id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -255,8 +255,8 @@ export default function CustomersPage() {
                     <td className="p-4">{c.email}</td>
                     <td className="p-4">{c.phone || '-'}</td>
                     <td className="p-4">
-                      {c.role === 'admin' ? (
-                        <Badge>Admin</Badge>
+                      {c.role === 'admin' || c.role === 'superadmin' ? (
+                        <Badge>{c.role === 'superadmin' ? 'Super Admin' : 'Admin'}</Badge>
                       ) : (
                         <Badge variant="secondary">Customer</Badge>
                       )}
@@ -273,7 +273,7 @@ export default function CustomersPage() {
                       <Button size="sm" onClick={() => openEditModal(c)} className="mr-2">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      {c.role !== 'admin' && (
+                      {c.role !== 'admin' && c.role !== 'superadmin' && (
                         <Button size="sm" variant="destructive" onClick={() => handleDelete(c._id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>

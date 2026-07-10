@@ -26,9 +26,9 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", { email, password });
       const { token, user } = res.data;
 
-      // Only admins may access this dashboard — reject everyone else without
-      // ever storing their session or navigating past the login screen.
-      if (user?.role !== "admin") {
+      // Only admins/super admins may access this dashboard — reject everyone
+      // else without ever storing their session or navigating past login.
+      if (user?.role !== "admin" && user?.role !== "superadmin") {
         toast.error("User not found");
         return;
       }

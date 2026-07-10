@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     if (!token) {
       router.push('/login');
-    } else if (role === 'admin') {
+    } else if (role === 'admin' || role === 'superadmin') {
       setIsAuthenticated(true);
     } else {
       // Token belongs to a non-admin (or malformed) session — never

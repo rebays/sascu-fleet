@@ -109,7 +109,7 @@ const deleteUser = catchAsync(async (req, res) => {
   }
 
   // Optional: Prevent deleting other admins
-  if (user.role === 'admin') {
+  if (user.role === 'admin' || user.role === 'superadmin') {
     return res.status(400).json({ message: 'Cannot delete admin accounts' });
   }
 
@@ -119,6 +119,83 @@ const deleteUser = catchAsync(async (req, res) => {
     success: true,
     message: 'User deleted successfully',
   });
+});
+
+// Super admin only: list admin + super admin accounts
+const getAdmins = catchAsync(async (req, res) => {
+  const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } })
+    .select('-password')
+    .sort({ role: 1, createdAt: -1 });
+
+  res.json({ success: true, count: admins.length, data: admins });
+});
+
+// Super admin only: create a new admin account
+const createAdmin = catchAsync(async (req, res) => {
+  const { name, email, password, phone } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email and password are required' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (existingUser) {
+    return res.status(400).json({ message: 'A user with this email already exists' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  const admin = await User.create({
+    name,
+    email: email.toLowerCase(),
+    password: hashedPassword,
+    phone,
+    role: 'admin',
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Admin created successfully',
+    data: {
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+      createdAt: admin.createdAt,
+    },
+  });
+});
+
+// Super admin only: reset another admin's password
+const resetAdminPassword = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  const target = await User.findById(id);
+  if (!target) {
+    return res.status(404).json({ message: 'Admin not found' });
+  }
+
+  if (target.role !== 'admin' && target.role !== 'superadmin') {
+    return res.status(400).json({ message: 'This endpoint can only reset admin passwords' });
+  }
+
+  // Super admins reset their own password via the regular "update password" flow.
+  if (target._id.toString() === req.user.id) {
+    return res.status(400).json({ message: 'Use your account settings to change your own password' });
+  }
+
+  target.password = await bcrypt.hash(newPassword, 12);
+  await target.save();
+
+  res.json({ success: true, message: `Password reset for ${target.name}` });
 });
 
 const updatePassword = catchAsync(async (req, res) => {
@@ -145,4 +222,4 @@ const updatePassword = catchAsync(async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser, toggleMembership, updatePassword };
+module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser, toggleMembership, updatePassword, getAdmins, createAdmin, resetAdminPassword };
