@@ -160,7 +160,7 @@ const getBookingById = catchAsync(async (req, res) => {
     .populate("user", "name email")
     .populate(
       "vehicle",
-      "make model licensePlate images pricePerDay pricePerHour"
+      "make model licensePlate images pricePerDay pricePerHalfDay pricePerDayMember pricePerHalfDayMember pricePerDayOutOfTown pricePerHalfDayOutOfTown pricePerDayMemberOutOfTown pricePerHalfDayMemberOutOfTown"
     );
 
   if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -234,6 +234,16 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { vehicle, startDate, endDate } = req.body;
 
+  const existingBooking = await Booking.findById(id).select('status');
+  if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
+
+  if (['confirmed', 'completed'].includes(existingBooking.status)) {
+    return res.status(409).json({
+      success: false,
+      message: `Cannot edit a ${existingBooking.status} booking.`,
+    });
+  }
+
   if (vehicle && (startDate || endDate)) {
     const existing = await Booking.findOne({
       _id: { $ne: id }, // exclude current booking
@@ -266,8 +276,17 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
 });
 
 const deleteBookingAdmin = catchAsync(async (req, res) => {
+  const existingBooking = await Booking.findById(req.params.id).select('status');
+  if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
+
+  if (['confirmed', 'completed'].includes(existingBooking.status)) {
+    return res.status(409).json({
+      success: false,
+      message: `Cannot delete a ${existingBooking.status} booking.`,
+    });
+  }
+
   const booking = await Booking.findByIdAndDelete(req.params.id);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
 
   res.json({ success: true, message: "Booking deleted" });
 });

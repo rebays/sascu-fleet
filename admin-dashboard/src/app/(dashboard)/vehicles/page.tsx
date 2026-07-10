@@ -21,10 +21,14 @@ interface Vehicle {
   year: number;
   type: string;
   licensePlate: string;
-  pricePerHour: number;
   pricePerDay: number;
-  pricePerHourMember?: number;
   pricePerDayMember?: number;
+  pricePerHalfDay?: number;
+  pricePerHalfDayMember?: number;
+  pricePerDayOutOfTown?: number;
+  pricePerDayMemberOutOfTown?: number;
+  pricePerHalfDayOutOfTown?: number;
+  pricePerHalfDayMemberOutOfTown?: number;
   location: string;
   status: 'active' | 'inactive';
   images?: string[];
@@ -38,8 +42,9 @@ export default function VehiclesPage() {
   const [open, setOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const emptyForm = {
-    make: '', model: '', year: '', type: 'car', licensePlate: '',
-    pricePerHour: '', pricePerDay: '', location: '', pricePerHourMember: '', pricePerDayMember: '',
+    make: '', model: '', year: '', type: 'car', licensePlate: '', location: '',
+    pricePerDay: '', pricePerDayMember: '', pricePerHalfDay: '', pricePerHalfDayMember: '',
+    pricePerDayOutOfTown: '', pricePerDayMemberOutOfTown: '', pricePerHalfDayOutOfTown: '', pricePerHalfDayMemberOutOfTown: '',
     status: 'inactive' as 'active' | 'inactive',
   };
   const [form, setForm] = useState(emptyForm);
@@ -100,8 +105,14 @@ export default function VehiclesPage() {
     const payload = {
       ...form,
       year: Number(form.year),
-      pricePerHour: Number(form.pricePerHour),
-      pricePerDay: Number(form.pricePerDay),
+      pricePerDay: Number(form.pricePerDay) || 0,
+      pricePerDayMember: Number(form.pricePerDayMember) || 0,
+      pricePerHalfDay: Number(form.pricePerHalfDay) || 0,
+      pricePerHalfDayMember: Number(form.pricePerHalfDayMember) || 0,
+      pricePerDayOutOfTown: Number(form.pricePerDayOutOfTown) || 0,
+      pricePerDayMemberOutOfTown: Number(form.pricePerDayMemberOutOfTown) || 0,
+      pricePerHalfDayOutOfTown: Number(form.pricePerHalfDayOutOfTown) || 0,
+      pricePerHalfDayMemberOutOfTown: Number(form.pricePerHalfDayMemberOutOfTown) || 0,
       images
     };
 
@@ -187,8 +198,15 @@ export default function VehiclesPage() {
     setEditingVehicle(v);
     setForm({
       make: v.make, model: v.model, year: v.year.toString(), type: v.type,
-      licensePlate: v.licensePlate, pricePerHour: v.pricePerHour.toString(),
-      pricePerDay: v.pricePerDay.toString(), location: v.location || '', pricePerHourMember: v.pricePerHourMember?.toString() || '0', pricePerDayMember: v.pricePerDayMember?.toString() || '0',
+      licensePlate: v.licensePlate, location: v.location || '',
+      pricePerDay: v.pricePerDay.toString(),
+      pricePerDayMember: v.pricePerDayMember?.toString() || '0',
+      pricePerHalfDay: v.pricePerHalfDay?.toString() || '0',
+      pricePerHalfDayMember: v.pricePerHalfDayMember?.toString() || '0',
+      pricePerDayOutOfTown: v.pricePerDayOutOfTown?.toString() || '0',
+      pricePerDayMemberOutOfTown: v.pricePerDayMemberOutOfTown?.toString() || '0',
+      pricePerHalfDayOutOfTown: v.pricePerHalfDayOutOfTown?.toString() || '0',
+      pricePerHalfDayMemberOutOfTown: v.pricePerHalfDayMemberOutOfTown?.toString() || '0',
       status: v.status || 'inactive',
     });
     setImages(v.images || []);
@@ -271,12 +289,12 @@ export default function VehiclesPage() {
                 {/* Rates */}
                 <div className="space-y-1.5 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-gray-500 dark:text-slate-400">Regular</span>
-                    <span className="font-medium">SBD{v.pricePerHour}/hr · SBD{v.pricePerDay}/day</span>
+                    <span className="text-gray-500 dark:text-slate-400">In Town</span>
+                    <span className="font-medium">SBD{v.pricePerDay}/day · SBD{v.pricePerHalfDay || 0}/half-day</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-gray-500 dark:text-slate-400">Member</span>
-                    <span className="font-medium">SBD{v.pricePerHourMember}/hr · SBD{v.pricePerDayMember}/day</span>
+                    <span className="text-gray-500 dark:text-slate-400">Out of Town</span>
+                    <span className="font-medium">SBD{v.pricePerDayOutOfTown || 0}/day · SBD{v.pricePerHalfDayOutOfTown || 0}/half-day</span>
                   </div>
                 </div>
               </div>
@@ -338,7 +356,7 @@ export default function VehiclesPage() {
                     </td>
                     <td className="p-4">{v.make} {v.model} ({v.year})</td>
                     <td className="p-4">{v.licensePlate}</td>
-                    <td className="p-4">SBD{v.pricePerHour}/hr • SBD{v.pricePerDay}/day</td>
+                    <td className="p-4">SBD{v.pricePerDay}/day in-town • SBD{v.pricePerDayOutOfTown || 0}/day out-of-town</td>
                     <td className="p-4">
                       <Badge variant={v.status === 'active' ? 'success' : 'secondary'} className="capitalize">
                         {v.status === 'active' ? 'Active' : 'Inactive'}
@@ -437,25 +455,52 @@ export default function VehiclesPage() {
                 {editingVehicle ? 'Inactive vehicles are hidden from customer search.' : 'New vehicles start Inactive until you activate them.'}
               </p>
             </div>
-            <div><Label>Price per Hour (Regular)</Label><Input type="number" value={form.pricePerHour} onChange={e => setForm({ ...form, pricePerHour: e.target.value })} /></div>
-            <div><Label>Price per Day (Regular)</Label><Input type="number" value={form.pricePerDay} onChange={e => setForm({ ...form, pricePerDay: e.target.value })} /></div>
-            <div>
-              <Label>Price per Hour (Members)</Label>
-              <Input
-                type="number"
-                value={form.pricePerHourMember || ''}
-                onChange={e => setForm({ ...form, pricePerHourMember: e.target.value })}
-                placeholder="Same as regular if blank"
-              />
+          </div>
+
+          {/* Rates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+              <h3 className="text-sm font-semibold mb-3">In Town Rates</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Day Rate</Label>
+                  <Input type="number" value={form.pricePerDay} onChange={e => setForm({ ...form, pricePerDay: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Half-Day Rate</Label>
+                  <Input type="number" value={form.pricePerHalfDay} onChange={e => setForm({ ...form, pricePerHalfDay: e.target.value })} placeholder="Half of day rate if blank" />
+                </div>
+                <div>
+                  <Label>Day Rate (Member)</Label>
+                  <Input type="number" value={form.pricePerDayMember} onChange={e => setForm({ ...form, pricePerDayMember: e.target.value })} placeholder="Same as regular if blank" />
+                </div>
+                <div>
+                  <Label>Half-Day Rate (Member)</Label>
+                  <Input type="number" value={form.pricePerHalfDayMember} onChange={e => setForm({ ...form, pricePerHalfDayMember: e.target.value })} placeholder="Same as regular if blank" />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label>Price per Day (Members)</Label>
-              <Input
-                type="number"
-                value={form.pricePerDayMember || ''}
-                onChange={e => setForm({ ...form, pricePerDayMember: e.target.value })}
-                placeholder="Same as regular if blank"
-              />
+
+            <div className="rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+              <h3 className="text-sm font-semibold mb-3">Out of Town Rates</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Day Rate</Label>
+                  <Input type="number" value={form.pricePerDayOutOfTown} onChange={e => setForm({ ...form, pricePerDayOutOfTown: e.target.value })} placeholder="Falls back to in-town rate" />
+                </div>
+                <div>
+                  <Label>Half-Day Rate</Label>
+                  <Input type="number" value={form.pricePerHalfDayOutOfTown} onChange={e => setForm({ ...form, pricePerHalfDayOutOfTown: e.target.value })} placeholder="Half of day rate if blank" />
+                </div>
+                <div>
+                  <Label>Day Rate (Member)</Label>
+                  <Input type="number" value={form.pricePerDayMemberOutOfTown} onChange={e => setForm({ ...form, pricePerDayMemberOutOfTown: e.target.value })} placeholder="Same as regular if blank" />
+                </div>
+                <div>
+                  <Label>Half-Day Rate (Member)</Label>
+                  <Input type="number" value={form.pricePerHalfDayMemberOutOfTown} onChange={e => setForm({ ...form, pricePerHalfDayMemberOutOfTown: e.target.value })} placeholder="Same as regular if blank" />
+                </div>
+              </div>
             </div>
           </div>
 

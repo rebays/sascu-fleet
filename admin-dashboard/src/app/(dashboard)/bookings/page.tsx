@@ -86,6 +86,7 @@ export default function AdminBookingsPage() {
     status: 'pending',
     driverLicense: '',
     pickupLocation: '',
+    locationType: 'in-town',
     paymentStatus: 'pending',
     totalPrice: '0.00'
   });
@@ -139,6 +140,40 @@ export default function AdminBookingsPage() {
   }, [filtered, currentPage]);
 
 
+  // Resolves the day/half-day rate for a vehicle given membership + location type.
+  // Falls back progressively: member rate -> regular rate -> in-town rate -> half of day rate.
+  const getVehicleRate = (vehicle: any, isMember: boolean, locationType: string, isHalfDay: boolean) => {
+    const pick = (memberVal: number, regularVal: number) => (isMember && memberVal > 0 ? memberVal : regularVal);
+    const dayInTown = pick(vehicle.pricePerDayMember || 0, vehicle.pricePerDay || 0);
+    const dayOutOfTown = pick(vehicle.pricePerDayMemberOutOfTown || 0, vehicle.pricePerDayOutOfTown || 0) || dayInTown;
+    const halfDayInTown = pick(vehicle.pricePerHalfDayMember || 0, vehicle.pricePerHalfDay || 0) || dayInTown / 2;
+    const halfDayOutOfTown = pick(vehicle.pricePerHalfDayMemberOutOfTown || 0, vehicle.pricePerHalfDayOutOfTown || 0) || dayOutOfTown / 2;
+
+    const dayRate = locationType === 'out-of-town' ? dayOutOfTown : dayInTown;
+    const halfDayRate = locationType === 'out-of-town' ? halfDayOutOfTown : halfDayInTown;
+    return isHalfDay ? halfDayRate : dayRate;
+  };
+
+  // Bookings <=12h are charged the half-day rate; anything longer rounds up to full days.
+  const calculateBookingTotal = (vehicleId: string, userId: string, startDate: string, endDate: string, locationType: string) => {
+    if (!vehicleId || !startDate || !endDate) return null;
+    const vehicle = vehicles.find((v: any) => v._id === vehicleId);
+    if (!vehicle) return null;
+
+    const hours = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60);
+    if (hours <= 0) return null;
+
+    const isHalfDay = hours <= 12;
+    const days = isHalfDay ? 1 : Math.max(1, Math.ceil(hours / 24));
+    const isMember = !!users.find((u: any) => u._id === userId)?.isMember;
+    const rate = getVehicleRate(vehicle, isMember, locationType, isHalfDay);
+    const totalPrice = isHalfDay ? rate : days * rate;
+
+    return { vehicle, isMember, isHalfDay, days, rate, totalPrice };
+  };
+
+  const bookingCalc = calculateBookingTotal(form.vehicleId, form.userId, form.startDate, form.endDate, form.locationType);
+
   const openCreateModal = () => {
     setEditing(null);
     setForm({
@@ -151,6 +186,7 @@ export default function AdminBookingsPage() {
       status: 'pending',
       driverLicense: '',
       pickupLocation: '',
+      locationType: 'in-town',
       paymentStatus: 'pending',
       totalPrice: '0.00'
     });
@@ -158,7 +194,10 @@ export default function AdminBookingsPage() {
     setOpen(true);
   };
 
+  const isLocked = (booking: any) => booking.status === 'confirmed' || booking.status === 'completed';
+
   const openEditModal = (booking: any) => {
+    if (isLocked(booking)) return;
     setEditing(booking);
     console.log('booking to edit:');
     console.log(booking)
@@ -173,6 +212,7 @@ export default function AdminBookingsPage() {
       paymentStatus: booking.paymentStatus,
       driverLicense: booking.driversLicense || '',
       pickupLocation: booking.pickupLocation || '',
+      locationType: booking.locationType || 'in-town',
       totalPrice: booking.totalPrice.toString(),
     });
     setCreatingUser(false);
@@ -180,6 +220,7 @@ export default function AdminBookingsPage() {
   };
 
   const openDeleteModal = (booking: any) => {
+    if (isLocked(booking)) return;
     setBookingToDelete(booking);
     setDeleteModalOpen(true);
   };
@@ -209,10 +250,12 @@ export default function AdminBookingsPage() {
       return;
     }
 
-    const start = new Date(form.startDate);
-    const end = new Date(form.endDate);
-    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-    const totalPrice = days * vehicle.pricePerDay;
+    const calc = calculateBookingTotal(form.vehicleId, form.userId, form.startDate, form.endDate, form.locationType);
+    if (!calc) {
+      toast.error('End date must be after start date');
+      return;
+    }
+    const totalPrice = calc.totalPrice;
 
     const payload = {
       user: form.userId,
@@ -225,6 +268,7 @@ export default function AdminBookingsPage() {
       paymentStatus: form.paymentStatus,
       driversLicense: form.driverLicense,
       pickupLocation: form.pickupLocation,
+      locationType: form.locationType,
       totalPrice: totalPrice,
     };
 
@@ -484,10 +528,23 @@ export default function AdminBookingsPage() {
                   <Button size="sm" variant="ghost" title="View" onClick={() => window.location.href = `/bookings/${b._id}`}>
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(b)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title={isLocked(b) ? `${b.status === 'confirmed' ? 'Confirmed' : 'Completed'} bookings can't be edited` : 'Edit'}
+                    disabled={isLocked(b)}
+                    onClick={() => openEditModal(b)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => openDeleteModal(b)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title={isLocked(b) ? `${b.status === 'confirmed' ? 'Confirmed' : 'Completed'} bookings can't be deleted` : 'Delete'}
+                    disabled={isLocked(b)}
+                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={() => openDeleteModal(b)}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -533,10 +590,26 @@ export default function AdminBookingsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(b)}>
+                        <Button size="sm" variant="ghost" title="View" onClick={() => window.location.href = `/bookings/${b._id}`}>
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title={isLocked(b) ? `${b.status === 'confirmed' ? 'Confirmed' : 'Completed'} bookings can't be edited` : 'Edit'}
+                          disabled={isLocked(b)}
+                          onClick={() => openEditModal(b)}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" title="Delete" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => openDeleteModal(b)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title={isLocked(b) ? `${b.status === 'confirmed' ? 'Confirmed' : 'Completed'} bookings can't be deleted` : 'Delete'}
+                          disabled={isLocked(b)}
+                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => openDeleteModal(b)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -715,6 +788,21 @@ export default function AdminBookingsPage() {
             </div>
           </div>
 
+          {/* Location Type */}
+          <div>
+            <Label>Rental Zone</Label>
+            <Select value={form.locationType} onValueChange={(v) => setForm({ ...form, locationType: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="in-town">In Town</SelectItem>
+                <SelectItem value="out-of-town">Out of Town</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-500 mt-1">Determines which rate applies</p>
+          </div>
+
           {/* Deposit */}
           <div>
             <Label>Deposit Amount (SBD)</Label>
@@ -734,59 +822,24 @@ export default function AdminBookingsPage() {
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-blue-900">Total Price</span>
               <span className="text-3xl font-bold text-blue-700">
-                SBD{(() => {
-                  if (!form.vehicleId || !form.startDate || !form.endDate) return '0';
-
-                  const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
-                  if (!vehicle) return '0';
-
-                  const start = new Date(form.startDate);
-                  const end = new Date(form.endDate);
-                  const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-
-                  const selectedUser = users.find((u: any) => u._id === form.userId);
-                  const isMember = !!selectedUser?.isMember;
-
-                  const dailyRate = isMember && vehicle.pricePerDayMember > 0
-                    ? vehicle.pricePerDayMember
-                    : vehicle.pricePerDay;
-
-                  return (days * dailyRate).toLocaleString();
-                })()}
+                SBD{(bookingCalc?.totalPrice || 0).toLocaleString()}
               </span>
             </div>
 
-            {/* Rate info */}
-            {form.vehicleId && form.startDate && form.endDate && (
-              <p className="text-sm mt-2 dark:text-blue-900">
-                {(() => {
-                  const selectedUser = users.find((u: any) => u._id === form.userId);
-                  const isMember = !!selectedUser?.isMember;
-                  const vehicle = vehicles.find((v: any) => v._id === form.vehicleId);
-
-                  if (!vehicle) return '';
-
-                  const usedDaily = isMember && vehicle.pricePerDayMember > 0
-                    ? vehicle.pricePerDayMember
-                    : vehicle.pricePerDay;
-
-                  return isMember
-                    ? `Member rate applied: SBD${usedDaily}/day`
-                    : `Regular rate: SBD${usedDaily}/day`;
-                })()}
-              </p>
+            {bookingCalc && (
+              <>
+                <p className="text-sm mt-2 dark:text-blue-900">
+                  {form.locationType === 'out-of-town' ? 'Out of town' : 'In town'}
+                  {bookingCalc.isMember ? ' member rate' : ' regular rate'} applied: SBD{bookingCalc.rate.toLocaleString()}
+                  {bookingCalc.isHalfDay ? '/half-day' : '/day'}
+                </p>
+                <p className="text-sm text-blue-600 mt-1">
+                  {bookingCalc.isHalfDay
+                    ? `Half-day rate (12h or less)`
+                    : `${bookingCalc.days} day${bookingCalc.days > 1 ? 's' : ''} × SBD${bookingCalc.rate.toLocaleString()}/day`}
+                </p>
+              </>
             )}
-
-            <p className="text-sm text-blue-600 mt-1">
-              {(() => {
-                if (!form.startDate || !form.endDate) return '';
-                const days = Math.ceil(
-                  (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
-                  (1000 * 60 * 60 * 24)
-                ) || 1;
-                return `${days} day${days > 1 ? 's' : ''} × SBD${vehicles.find((v: any) => v._id === form.vehicleId)?.pricePerDay || 0}/day`;
-              })()}
-            </p>
           </div>
 
           {/* Status */}

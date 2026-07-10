@@ -167,9 +167,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <h2 className="text-base font-semibold flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-400" /> Rental Period
                 </h2>
-                <span className="text-xs font-medium text-gray-500 dark:text-slate-400">
-                  {rentalDays} day{rentalDays !== 1 ? 's' : ''} rental
-                </span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="capitalize">
+                    {booking.locationType === 'out-of-town' ? 'Out of Town' : 'In Town'}
+                  </Badge>
+                  <span className="text-xs font-medium text-gray-500 dark:text-slate-400">
+                    {rentalDays} day{rentalDays !== 1 ? 's' : ''} rental
+                  </span>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
@@ -363,12 +368,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/40">
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Daily Rate</p>
-                    <p className="font-semibold">SBD {booking.vehicle?.pricePerDay}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">In Town / Day</p>
+                    <p className="font-semibold">SBD {booking.vehicle?.pricePerDay || 0}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/40">
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Hourly Rate</p>
-                    <p className="font-semibold">SBD {booking.vehicle?.pricePerHour}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">In Town / Half-Day</p>
+                    <p className="font-semibold">SBD {booking.vehicle?.pricePerHalfDay || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/40">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Out of Town / Day</p>
+                    <p className="font-semibold">SBD {booking.vehicle?.pricePerDayOutOfTown || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/40">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Out of Town / Half-Day</p>
+                    <p className="font-semibold">SBD {booking.vehicle?.pricePerHalfDayOutOfTown || 0}</p>
                   </div>
                 </div>
               </div>

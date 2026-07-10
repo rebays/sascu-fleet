@@ -11,6 +11,7 @@ const bookingSchema = new mongoose.Schema({
   balance: { type: Number, default: 0 },
   driversLicense: { type: String },
   pickupLocation: { type: String },
+  locationType: { type: String, enum: ['in-town', 'out-of-town'], default: 'in-town' },
   note: { type: String },
   status: {
     type: String,
