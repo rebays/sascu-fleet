@@ -26,6 +26,12 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", { email, password });
       const { token, user } = res.data;
 
+      // Only admins may access this dashboard — reject everyone else without
+      // ever storing their session or navigating past the login screen.
+      if (user?.role !== "admin") {
+        toast.error("User not found");
+        return;
+      }
 
       // Save token
       localStorage.setItem("token", token);

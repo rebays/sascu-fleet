@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -11,12 +12,26 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   useEffect(() => {
     // This only runs in the browser
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    
+    const userRaw = localStorage.getItem('user');
+
+    let role: string | undefined;
+    try {
+      role = userRaw ? JSON.parse(userRaw).role : undefined;
+    } catch {
+      role = undefined;
+    }
+
     if (!token) {
       router.push('/login');
-    } else if(user && JSON.parse(user).role === 'admin') {
+    } else if (role === 'admin') {
       setIsAuthenticated(true);
+    } else {
+      // Token belongs to a non-admin (or malformed) session — never
+      // render the dashboard for it, bounce back to login instead.
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      toast.error('User not found');
+      router.push('/login');
     }
     setIsLoading(false);
   }, [router]);
