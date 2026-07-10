@@ -79,7 +79,7 @@ const getAvailableVehiclesByDateRange = catchAsync(async (req, res) => {
   const blockedVehicleIds = conflictingBookings.map(b => String(b.vehicle));
 
   const vehicles = await Vehicle.find({
-    isAvailable: true,
+    status: 'active',
     _id: { $nin: blockedVehicleIds }
   });
 

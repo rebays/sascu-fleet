@@ -11,7 +11,8 @@ const vehicleSchema = new mongoose.Schema({
   pricePerHourMember: { type: Number, default: 0 },   // 0 = fallback to regular price
   pricePerDayMember: { type: Number, default: 0 },
   location: { type: String, required: true },
-  images: [String]
+  images: [String],
+  status: { type: String, enum: ['active', 'inactive'], default: 'inactive' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Vehicle', vehicleSchema);

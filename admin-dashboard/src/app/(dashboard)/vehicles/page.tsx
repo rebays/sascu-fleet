@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Car, Edit, Trash2, Plus, Upload, X, Grid3x3, List, Search, Loader } from 'lucide-react';
+import { Car, Edit, Trash2, Plus, Upload, X, Grid3x3, List, Search, Loader, Power, PowerOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import useSWR, { mutate } from 'swr';
 import fetcher from '@/lib/api';
@@ -28,7 +28,7 @@ interface Vehicle {
   pricePerHourMember?: number;
   pricePerDayMember?: number;
   location: string;
-  isAvailable: boolean;
+  status: 'active' | 'inactive';
   images?: string[];
 }
 
@@ -39,14 +39,17 @@ export default function VehiclesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const [open, setOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [form, setForm] = useState({
+  const emptyForm = {
     make: '', model: '', year: '', type: 'car', licensePlate: '',
-    pricePerHour: '', pricePerDay: '', location: '', pricePerHourMember: '', pricePerDayMember: ''
-  });
+    pricePerHour: '', pricePerDay: '', location: '', pricePerHourMember: '', pricePerDayMember: '',
+    status: 'inactive' as 'active' | 'inactive',
+  };
+  const [form, setForm] = useState(emptyForm);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+  const [vehicleToToggle, setVehicleToToggle] = useState<Vehicle | null>(null);
 
   //Search functionality
   const filtered = useMemo(() => {
@@ -141,14 +144,38 @@ export default function VehiclesPage() {
       });
 
       if (!res.ok) throw new Error();
-      toast.success(editingVehicle ? 'Vehicle updated!' : 'Vehicle added!');
+      toast.success(editingVehicle ? 'Vehicle updated!' : 'Vehicle added! It starts Inactive until you activate it.');
       mutate('/vehicles');
       setOpen(false);
       setEditingVehicle(null);
-      setForm({ make: '', model: '', year: '', type: 'car', licensePlate: '', pricePerHour: '', pricePerDay: '', location: '', pricePerHourMember: '', pricePerDayMember: '' });
+      setForm(emptyForm);
       setImages([]);
     } catch {
       toast.error('Failed to save');
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!vehicleToToggle) return;
+    const nextStatus = vehicleToToggle.status === 'active' ? 'inactive' : 'active';
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/vehicles/${vehicleToToggle._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      if (!res.ok) throw new Error();
+      toast.success(`Vehicle marked ${nextStatus}`);
+      mutate('/vehicles');
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setVehicleToToggle(null);
     }
   };
 
@@ -180,7 +207,8 @@ export default function VehiclesPage() {
     setForm({
       make: v.make, model: v.model, year: v.year.toString(), type: v.type,
       licensePlate: v.licensePlate, pricePerHour: v.pricePerHour.toString(),
-      pricePerDay: v.pricePerDay.toString(), location: v.location || '', pricePerHourMember: v.pricePerHourMember?.toString() || '0', pricePerDayMember: v.pricePerDayMember?.toString() || '0'
+      pricePerDay: v.pricePerDay.toString(), location: v.location || '', pricePerHourMember: v.pricePerHourMember?.toString() || '0', pricePerDayMember: v.pricePerDayMember?.toString() || '0',
+      status: v.status || 'inactive',
     });
     setImages(v.images || []);
     setOpen(true);
@@ -225,7 +253,7 @@ export default function VehiclesPage() {
             </Button>
           </div>
 
-          <Button className="flex items-center cursor-pointer" onClick={() => { setEditingVehicle(null); setImages([]); setOpen(true); }}>
+          <Button className="flex items-center cursor-pointer" onClick={() => { setEditingVehicle(null); setForm(emptyForm); setImages([]); setOpen(true); }}>
             <Plus className="w-5 h-5 mr-2" /> Add Vehicle
           </Button>
         </div>
@@ -245,8 +273,8 @@ export default function VehiclesPage() {
                     <Car className="w-12 h-12 text-gray-300 dark:text-slate-500" />
                   </div>
                 )}
-                <Badge variant={v.isAvailable ? 'success' : 'destructive'} className="absolute top-3 right-3 shadow-sm">
-                  {v.isAvailable ? 'Available' : 'Booked'}
+                <Badge variant={v.status === 'active' ? 'success' : 'secondary'} className="absolute top-3 right-3 shadow-sm capitalize">
+                  {v.status === 'active' ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
 
@@ -283,6 +311,15 @@ export default function VehiclesPage() {
                   <span className="text-xs font-normal text-gray-500 dark:text-slate-400">/day</span>
                 </p>
                 <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title={v.status === 'active' ? 'Deactivate' : 'Activate'}
+                    className={v.status === 'active' ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}
+                    onClick={() => setVehicleToToggle(v)}
+                  >
+                    {v.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                  </Button>
                   <Button size="sm" variant="ghost" title="Edit" onClick={() => openEdit(v)}>
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -325,11 +362,20 @@ export default function VehiclesPage() {
                     <td className="p-4">{v.licensePlate}</td>
                     <td className="p-4">SBD{v.pricePerHour}/hr • SBD{v.pricePerDay}/day</td>
                     <td className="p-4">
-                      <Badge variant={v.isAvailable ? 'default' : 'destructive'}>
-                        {v.isAvailable ? 'Available' : 'Booked'}
+                      <Badge variant={v.status === 'active' ? 'success' : 'secondary'} className="capitalize">
+                        {v.status === 'active' ? 'Active' : 'Inactive'}
                       </Badge>
                     </td>
                     <td className="p-4 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title={v.status === 'active' ? 'Deactivate' : 'Activate'}
+                        className="mr-2"
+                        onClick={() => setVehicleToToggle(v)}
+                      >
+                        {v.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                      </Button>
                       <Button size="sm" onClick={() => openEdit(v)} className="mr-2">
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -400,6 +446,19 @@ export default function VehiclesPage() {
             </div>
             <div><Label>License Plate</Label><Input value={form.licensePlate} onChange={e => setForm({ ...form, licensePlate: e.target.value })} /></div>
             <div><Label>Location</Label><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></div>
+            <div>
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(val: 'active' | 'inactive') => setForm({ ...form, status: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-500 mt-1">
+                {editingVehicle ? 'Inactive vehicles are hidden from customer search.' : 'New vehicles start Inactive until you activate them.'}
+              </p>
+            </div>
             <div><Label>Price per Hour (Regular)</Label><Input type="number" value={form.pricePerHour} onChange={e => setForm({ ...form, pricePerHour: e.target.value })} /></div>
             <div><Label>Price per Day (Regular)</Label><Input type="number" value={form.pricePerDay} onChange={e => setForm({ ...form, pricePerDay: e.target.value })} /></div>
             <div>
@@ -444,6 +503,23 @@ export default function VehiclesPage() {
         confirmText="Yes, Delete Vehicle"
         variant="destructive"
         onConfirm={handleDelete}
+      />
+
+      {/* Status Toggle Confirmation */}
+      <ConfirmationModal
+        open={!!vehicleToToggle}
+        onOpenChange={(isOpen) => { if (!isOpen) setVehicleToToggle(null); }}
+        title={vehicleToToggle?.status === 'active' ? 'Deactivate Vehicle?' : 'Activate Vehicle?'}
+        description={
+          vehicleToToggle
+            ? vehicleToToggle.status === 'active'
+              ? `${vehicleToToggle.make} ${vehicleToToggle.model} (${vehicleToToggle.licensePlate}) will be hidden from customer search and can't be booked until reactivated.`
+              : `${vehicleToToggle.make} ${vehicleToToggle.model} (${vehicleToToggle.licensePlate}) will become visible to customers and available for booking.`
+            : ''
+        }
+        confirmText={vehicleToToggle?.status === 'active' ? 'Yes, Deactivate' : 'Yes, Activate'}
+        variant={vehicleToToggle?.status === 'active' ? 'destructive' : 'default'}
+        onConfirm={handleToggleStatus}
       />
     </div>
   );
