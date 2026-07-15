@@ -1,53 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { getVehicles } from "@/lib/api";
-import { cn, formatCurrency } from "@/lib/utils";
-import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FieldError } from "@/components/ui/field-error";
+import { VehicleCard } from "@/components/VehicleCard";
 import {
   Search,
   Calendar,
   Car,
-  Bike,
-  Truck,
   CheckCircle,
   Shield,
   Clock,
   Headphones,
   ArrowRight,
-  MapPin,
 } from "lucide-react";
-
-// Map vehicle types to icons
-const VehicleIcon = ({ type }: { type: string }) => {
-  const iconClass = "h-6 w-6";
-  switch (type) {
-    case "bike":
-    case "scooter":
-      return <Bike className={iconClass} />;
-    case "truck":
-      return <Truck className={iconClass} />;
-    default:
-      return <Car className={iconClass} />;
-  }
-};
-
-// Helper function to get the full image URL
-const getImageUrl = (imagePath: string): string => {
-  // If it's already a full URL, return as-is
-  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-    return imagePath;
-  }
-  // Otherwise, construct URL using backend base URL
-  const baseUrl = API_URL.replace("/api", "");
-  return `${baseUrl}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
-};
 
 export default function Home() {
   const router = useRouter();
@@ -130,15 +101,17 @@ export default function Home() {
     <div className="-mt-16 lg:-mt-[88px] mb-0">
       {/* Hero Section with Search Overlay */}
       <section className="relative h-[calc(80vh+64px)] lg:h-[calc(66vh+88px)] min-h-[588px] flex items-center pt-16 lg:pt-24">
-        {/* Background Image with Overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('https://images.pexels.com/photos/315938/pexels-photo-315938.jpeg?_gl=1*1wihxp7*_ga*MTY4MjEyNDI4OS4xNzY3MzUwMjkw*_ga_8JE65Q40S6*czE3NjczNTAyOTAkbzEkZzEkdDE3NjczNTAzNzMkajU4JGwwJGgw')",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
+        {/* Background Video with Overlay */}
+        <div className="absolute inset-0 overflow-hidden">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src="/hero-vid.webm"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/40"></div>
         </div>
 
         {/* Content Container */}
@@ -251,68 +224,19 @@ export default function Home() {
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="bg-card border rounded-lg p-6 animate-pulse"
-              >
-                <div className="bg-muted rounded-lg h-48 mb-4"></div>
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-              </div>
+                className="aspect-[4/5] w-full animate-pulse rounded-2xl border-4 border-white bg-muted shadow-lg"
+              ></div>
             ))}
           </div>
         ) : vehicles.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vehicles.map((vehicle) => (
-                <Link
+                <VehicleCard
                   key={vehicle._id}
+                  vehicle={vehicle}
                   href={`/vehicles/${vehicle._id}`}
-                  className="group bg-card border rounded-lg overflow-hidden transition-all hover:shadow-lg hover:border-primary/50"
-                >
-                  <div className="relative bg-muted/40 h-48 border-b overflow-hidden">
-                    {vehicle.images && vehicle.images.length > 0 ? (
-                      <Image
-                        src={getImageUrl(vehicle.images[0])}
-                        alt={vehicle.displayName}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <VehicleIcon type={vehicle.type} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                        {VEHICLE_TYPE_DISPLAY[vehicle.type] || vehicle.type}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                      {vehicle.displayName}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {vehicle.year}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {vehicle.location}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <span className="text-2xl font-bold text-primary">
-                        {formatCurrency(vehicle.pricePerDay)}
-                        <span className="text-sm text-muted-foreground font-normal">
-                          /day
-                        </span>
-                      </span>
-                      <ArrowRight className="h-5 w-5 text-primary group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
+                />
               ))}
             </div>
             <div className="text-center mt-12">

@@ -71,7 +71,7 @@ export function DatePicker({
           disabled={disabled}
           data-error={!!error}
           className={cn(
-            "h-auto w-full justify-start rounded-md border border-input bg-background px-3 py-2 text-sm font-normal text-left ring-offset-background hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[error=true]:border-destructive data-[error=true]:focus-visible:ring-destructive/40",
+            "h-auto w-full justify-start rounded-md border border-input bg-background px-3 py-2 text-sm font-normal text-left ring-offset-background hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[error=true]:border-destructive data-[error=true]:focus-visible:ring-destructive/40",
             !selected && "text-muted-foreground",
             className
           )}

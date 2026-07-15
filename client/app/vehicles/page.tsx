@@ -1,36 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getVehicles } from "@/lib/api";
-import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
 import Breadcrumb from "@/components/Breadcrumb";
-import { Car, Bike, Truck, MapPin, Calendar, ArrowRight, AlertCircle } from "lucide-react";
-
-// Map vehicle types to icons
-const VehicleIcon = ({ type }: { type: string }) => {
-  const iconClass = "h-6 w-6";
-  switch (type) {
-    case "bike":
-    case "scooter":
-      return <Bike className={iconClass} />;
-    case "truck":
-      return <Truck className={iconClass} />;
-    default:
-      return <Car className={iconClass} />;
-  }
-};
-
-// Helper function to get the full image URL
-const getImageUrl = (imagePath: string): string => {
-  // If it's already a full URL, return as-is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
-  }
-  // Otherwise, construct URL using backend base URL
-  const baseUrl = API_URL.replace('/api', '');
-  return `${baseUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-};
+import { VehicleCard } from "@/components/VehicleCard";
+import { Car, Calendar, AlertCircle } from "lucide-react";
 
 export default async function VehiclesPage() {
   let vehicles: VehicleDisplay[] = [];
@@ -131,79 +104,11 @@ export default async function VehiclesPage() {
         {vehicles.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vehicles.map((vehicle) => (
-              <div
+              <VehicleCard
                 key={vehicle._id}
-                className="group bg-card border rounded-lg overflow-hidden hover:shadow-lg transition-all"
-              >
-                {/* Vehicle Image */}
-                <div className="relative bg-muted/40 h-48 border-b overflow-hidden">
-                  {vehicle.images && vehicle.images.length > 0 ? (
-                    <Image
-                      src={getImageUrl(vehicle.images[0])}
-                      alt={vehicle.displayName}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <VehicleIcon type={vehicle.type} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Content */}
-                <div className="p-6">
-                  {/* Type Badge */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-                    <VehicleIcon type={vehicle.type} />
-                    {VEHICLE_TYPE_DISPLAY[vehicle.type] || vehicle.type}
-                  </div>
-
-                  {/* Vehicle Name */}
-                  <h3 className="text-xl font-bold mb-3">
-                    {vehicle.displayName}
-                  </h3>
-
-                  {/* Details */}
-                  <div className="space-y-2 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Year: {vehicle.year}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{vehicle.location}</span>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-4 pb-4 border-b">
-                    <div className="text-2xl font-bold text-primary">
-                      {formatCurrency(vehicle.pricePerDay)}
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /day
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1 h-5">
-                      {vehicle.pricePerHour > 0 ? (
-                        <>or {formatCurrency(vehicle.pricePerHour)}/hour</>
-                      ) : (
-                        <>&nbsp;</>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* CTA Button */}
-                  <Link
-                    href={`/vehicles/${vehicle._id}`}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 group-hover:gap-3"
-                  >
-                    View Details
-                    <ArrowRight className="h-4 w-4 transition-all" />
-                  </Link>
-                </div>
-              </div>
+                vehicle={vehicle}
+                href={`/vehicles/${vehicle._id}`}
+              />
             ))}
           </div>
         )}
