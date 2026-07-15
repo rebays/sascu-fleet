@@ -35,6 +35,10 @@ const createBooking = catchAsync(async (req, res) => {
     return res.status(404).json({ success: false, message: "Vehicle not found" });
   }
 
+  if (vehicle.status !== "active") {
+    return res.status(400).json({ success: false, message: "This vehicle is not available for booking" });
+  }
+
   const existingBooking = await Booking.findOne({
     vehicle: vehicleId,
     status: "confirmed",
@@ -188,8 +192,18 @@ const getBookingByRef = catchAsync(async (req, res) => {
 });
 
 const createBookingAdmin = catchAsync(async (req, res) => {
+  const { vehicle: vehicleId, startDate, endDate } = req.body;
+
+  const vehicleDoc = await Vehicle.findById(vehicleId).select('status').lean();
+  if (!vehicleDoc) {
+    return res.status(404).json({ success: false, message: "Vehicle not found" });
+  }
+  if (vehicleDoc.status !== "active") {
+    return res.status(400).json({ success: false, message: "This vehicle is inactive and cannot be booked" });
+  }
+
   const booking = await Booking.create(req.body);
-  const { vehicle, startDate, endDate } = req.body;
+  const { vehicle } = req.body;
 
   // Check if vehicle is already booked
   const conflictingBooking = await Booking.findOne({

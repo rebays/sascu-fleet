@@ -210,6 +210,21 @@ const updateVehicle = catchAsync(async (req, res) => {
     vehicle,
   });
 });
+const getActiveBookingsCount = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const vehicle = await Vehicle.findById(id).select('_id').lean();
+  if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
+
+  const count = await Booking.countDocuments({
+    vehicle: id,
+    status: { $in: ['pending', 'confirmed'] },
+    endDate: { $gte: new Date() },
+  });
+
+  res.json({ success: true, count });
+});
+
 const deleteVehicle = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -243,4 +258,4 @@ const deleteVehicle = catchAsync(async (req, res) => {
   });
 });
 
-module.exports = { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, getConfirmedBookingDatesForVehicle, createVehicle,deleteVehicle,updateVehicle };
+module.exports = { getVehicles, getVehicleById, getAvailableVehiclesByDateRange, getBookingDatesForVehicle, getConfirmedBookingDatesForVehicle, getActiveBookingsCount, createVehicle,deleteVehicle,updateVehicle };

@@ -53,6 +53,7 @@ export default function VehiclesPage() {
   const [search, setSearch] = useState('');
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
   const [vehicleToToggle, setVehicleToToggle] = useState<Vehicle | null>(null);
+  const [toggleBookingCount, setToggleBookingCount] = useState<number | null>(null);
 
   //Search functionality
   const filtered = useMemo(() => {
@@ -147,6 +148,23 @@ export default function VehiclesPage() {
     }
   };
 
+  const openToggleModal = async (v: Vehicle) => {
+    setVehicleToToggle(v);
+    setToggleBookingCount(null);
+    if (v.status !== 'active') return; // only deactivating needs the booking count
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/vehicles/${v._id}/active-bookings-count`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!res.ok) return;
+      const result = await res.json();
+      setToggleBookingCount(result.count ?? 0);
+    } catch {
+      // Non-critical - the confirmation dialog just won't show a count
+    }
+  };
+
   const handleToggleStatus = async () => {
     if (!vehicleToToggle) return;
     const nextStatus = vehicleToToggle.status === 'active' ? 'inactive' : 'active';
@@ -168,6 +186,7 @@ export default function VehiclesPage() {
       toast.error('Failed to update status');
     } finally {
       setVehicleToToggle(null);
+      setToggleBookingCount(null);
     }
   };
 
@@ -312,7 +331,7 @@ export default function VehiclesPage() {
                     variant="ghost"
                     title={v.status === 'active' ? 'Deactivate' : 'Activate'}
                     className={v.status === 'active' ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'}
-                    onClick={() => setVehicleToToggle(v)}
+                    onClick={() => openToggleModal(v)}
                   >
                     {v.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                   </Button>
@@ -368,7 +387,7 @@ export default function VehiclesPage() {
                         variant="outline"
                         title={v.status === 'active' ? 'Deactivate' : 'Activate'}
                         className="mr-2"
-                        onClick={() => setVehicleToToggle(v)}
+                        onClick={() => openToggleModal(v)}
                       >
                         {v.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </Button>
@@ -531,12 +550,15 @@ export default function VehiclesPage() {
       {/* Status Toggle Confirmation */}
       <ConfirmationModal
         open={!!vehicleToToggle}
-        onOpenChange={(isOpen) => { if (!isOpen) setVehicleToToggle(null); }}
+        onOpenChange={(isOpen) => { if (!isOpen) { setVehicleToToggle(null); setToggleBookingCount(null); } }}
         title={vehicleToToggle?.status === 'active' ? 'Deactivate Vehicle?' : 'Activate Vehicle?'}
         description={
           vehicleToToggle
             ? vehicleToToggle.status === 'active'
-              ? `${vehicleToToggle.make} ${vehicleToToggle.model} (${vehicleToToggle.licensePlate}) will be hidden from customer search and can't be booked until reactivated.`
+              ? `${vehicleToToggle.make} ${vehicleToToggle.model} (${vehicleToToggle.licensePlate}) will be hidden from customer search and can't be booked until reactivated.` +
+                (toggleBookingCount
+                  ? ` It has ${toggleBookingCount} active or upcoming booking${toggleBookingCount > 1 ? 's' : ''} (pending/confirmed) - ${toggleBookingCount > 1 ? 'these' : 'this'} will NOT be cancelled and will still need to be fulfilled.`
+                  : '')
               : `${vehicleToToggle.make} ${vehicleToToggle.model} (${vehicleToToggle.licensePlate}) will become visible to customers and available for booking.`
             : ''
         }

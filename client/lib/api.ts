@@ -46,7 +46,9 @@ export async function getVehicles(): Promise<VehicleDisplay[]> {
     }
 
     const vehicles: Vehicle[] = await response.json();
-    return vehicles.map(transformVehicle);
+    // Inactive vehicles are still visible to admins via the dashboard's own
+    // fetch of this endpoint, but shouldn't be offered to customers here.
+    return vehicles.filter((v) => v.status !== 'inactive').map(transformVehicle);
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
