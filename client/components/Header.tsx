@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Car } from "lucide-react";
 
 export default function Header() {
   const pathname = usePathname();
@@ -20,6 +20,15 @@ export default function Header() {
             href="/"
             className="flex items-center gap-2 font-bold text-xl text-black"
           >
+            <div className="relative w-9 h-9 shrink-0">
+              <Image
+                src="/sascu-logo-ori.png"
+                alt="SASCU"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
             <span>SASCU</span>
           </Link>
 
