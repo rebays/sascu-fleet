@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Car, Mail, Phone, FileText,
   Clock, CheckCircle2, XCircle, Loader, ArrowRight, ArrowLeft,
-  ShieldCheck, CreditCard, MapPin, Printer, Receipt
+  ShieldCheck, CreditCard, MapPin, Receipt
 } from 'lucide-react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/api';
@@ -29,9 +29,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<'confirmed' | 'cancelled' | null>(null);
   const [statusNote, setStatusNote] = useState('');
+  const [docType, setDocType] = useState<'invoice' | 'receipt'>('invoice');
 
   const payments = bookingPayments?.data || [];
   const router = useRouter();
+
+  const handlePreview = (type: 'invoice' | 'receipt') => {
+    setDocType(type);
+    setTimeout(() => window.print(), 50);
+  };
 
   const handleStatusChange = async () => {
     if (!pendingStatus) return;
@@ -137,9 +143,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="w-4 h-4 mr-2" /> Print
-            </Button>
             {booking.status === 'pending' && (
               <>
                 <Button
@@ -241,7 +244,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 </div>
 
                 <div className="mt-4">
-                  <BookingActions booking={booking} />
+                  <BookingActions booking={booking} onPreview={handlePreview} />
                 </div>
               </Card>
 
@@ -429,7 +432,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Print Template (Visible only during print) */}
-      <BookingPrintView booking={booking} payments={payments} />
+      <BookingPrintView booking={booking} payments={payments} docType={docType} />
     </div>
   );
 }

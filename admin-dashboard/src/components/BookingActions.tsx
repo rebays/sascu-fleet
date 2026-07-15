@@ -6,9 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  DollarSign, Mail, Printer, CreditCard, Banknote,
-  Loader2, Receipt, Send, CheckCircle2, History
+import {
+  DollarSign, FileText, CreditCard, Banknote,
+  Receipt, Send, History
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
@@ -16,16 +16,13 @@ import { useSWRConfig } from 'swr';
 interface BookingActionsProps {
   booking: any;
   onPaymentRecorded?: () => void;
+  onPreview: (type: 'invoice' | 'receipt') => void;
 }
 
-export default function BookingActions({ booking, onPaymentRecorded }: BookingActionsProps) {
+export default function BookingActions({ booking, onPaymentRecorded, onPreview }: BookingActionsProps) {
   const { mutate } = useSWRConfig();
 
   const [paymentOpen, setPaymentOpen] = useState(false);
-  const [invoiceOpen, setInvoiceOpen] = useState(false);
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [sendingReceipt, setSendingReceipt] = useState(false);
-  const [receiptOpen, setReceiptOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('card');
 
@@ -66,63 +63,20 @@ export default function BookingActions({ booking, onPaymentRecorded }: BookingAc
     }
   };
 
-  const handleSendInvoice = async () => {
-    setSendingEmail(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/bookings/admin/${booking._id}/send-invoice`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-
-      if (!res.ok) throw new Error();
-      toast.success('Invoice successfully dispatched to client');
-      setInvoiceOpen(false);
-    } catch (err) {
-      toast.error('Failed to send invoice');
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
-  const handleSendReceipt = async () => {
-    setSendingReceipt(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/bookings/admin/${booking._id}/send-receipt`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-
-      if (!res.ok) throw new Error();
-      toast.success('Receipt successfully dispatched to client');
-      setReceiptOpen(false);
-    } catch (err) {
-      toast.error('Failed to send receipt');
-    } finally {
-      setSendingReceipt(false);
-    }
-  };
-
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 print:hidden">
-        <Button size="sm" onClick={() => setPaymentOpen(true)}>
+      <div className="space-y-2 print:hidden">
+        <Button size="sm" className="w-full" onClick={() => setPaymentOpen(true)}>
           <DollarSign className="w-4 h-4 mr-1.5" /> Record Payment
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setInvoiceOpen(true)}>
-          <Mail className="w-4 h-4 mr-1.5" /> Send Invoice
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setReceiptOpen(true)}>
-          <Receipt className="w-4 h-4 mr-1.5" /> Send Receipt
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => window.print()}>
-          <Printer className="w-4 h-4 mr-1.5" /> Print View
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button size="sm" variant="outline" onClick={() => onPreview('invoice')}>
+            <FileText className="w-4 h-4 mr-1.5" /> Preview Invoice
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onPreview('receipt')}>
+            <Receipt className="w-4 h-4 mr-1.5" /> Preview Receipt
+          </Button>
+        </div>
       </div>
 
       {/* Record Payment Modal */}
@@ -185,46 +139,6 @@ export default function BookingActions({ booking, onPaymentRecorded }: BookingAc
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentOpen(false)}>Cancel</Button>
             <Button onClick={handleRecordPayment}>Record Payment</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Send Invoice Modal */}
-      <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-blue-600" /> Send Invoice?
-            </DialogTitle>
-            <DialogDescription>
-              A digital invoice will be emailed to <strong className="font-medium text-gray-700 dark:text-slate-200">{booking.user?.email}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setInvoiceOpen(false)}>Cancel</Button>
-            <Button onClick={handleSendInvoice} disabled={sendingEmail}>
-              {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4 mr-2" /> Send to Client</>}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Send Receipt Modal */}
-      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-green-600" /> Send Receipt?
-            </DialogTitle>
-            <DialogDescription>
-              A digital payment receipt will be emailed to <strong className="font-medium text-gray-700 dark:text-slate-200">{booking.user?.email}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReceiptOpen(false)}>Cancel</Button>
-            <Button onClick={handleSendReceipt} disabled={sendingReceipt}>
-              {sendingReceipt ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Send to Client</>}
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

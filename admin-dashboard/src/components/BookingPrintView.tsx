@@ -3,9 +3,10 @@
 interface PrintTemplateProps {
   booking: any;
   payments: any[];
+  docType?: 'invoice' | 'receipt';
 }
 
-export default function BookingPrintView({ booking, payments }: PrintTemplateProps) {
+export default function BookingPrintView({ booking, payments, docType }: PrintTemplateProps) {
   const formatDate = (d: string) => {
     return new Date(d).toLocaleDateString('en-ZA', {
       year: 'numeric',
@@ -21,6 +22,7 @@ export default function BookingPrintView({ booking, payments }: PrintTemplatePro
     .reduce((sum, p) => sum + p.amount, 0);
 
   const balanceDue = booking.totalPrice - totalPaid;
+  const title = docType ? (docType === 'invoice' ? 'Invoice' : 'Receipt') : (balanceDue <= 0 ? 'Receipt' : 'Invoice');
 
   return (
     <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-10 font-sans text-gray-900 overflow-y-auto">
@@ -36,7 +38,7 @@ export default function BookingPrintView({ booking, payments }: PrintTemplatePro
         </div>
         <div className="text-right">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-1">
-            {balanceDue <= 0 ? 'Receipt' : 'Invoice'}
+            {title}
           </h2>
           <p className="font-semibold text-gray-900">#{booking.bookingRef}</p>
           <p className="text-gray-500 text-xs mt-0.5 capitalize">Status: {booking.status}</p>
