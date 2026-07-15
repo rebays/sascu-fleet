@@ -12,8 +12,10 @@ import {
   type BookedDate,
 } from "@/lib/api";
 import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
-import { formatCurrency, dateInputPickerOnlyProps } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Car,
   Bike,
@@ -66,6 +68,10 @@ export function VehicleDetailsContent({ id }: { id: string }) {
 
   const [startDate, setStartDate] = useState(startDateFromUrl || "");
   const [endDate, setEndDate] = useState(endDateFromUrl || "");
+  const [dateErrors, setDateErrors] = useState<{
+    startDate?: string;
+    endDate?: string;
+  }>({});
 
   // Scroll to top on mount
   useEffect(() => {
@@ -115,22 +121,28 @@ export function VehicleDetailsContent({ id }: { id: string }) {
 
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
+    setDateErrors((prev) => ({ ...prev, startDate: undefined }));
     // Keep the end date valid: it can never be before the start date
     if (endDate && value && endDate < value) {
       setEndDate(value);
     }
   };
 
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    setDateErrors((prev) => ({ ...prev, endDate: undefined }));
+  };
+
   const handleBookNow = () => {
-    if (!startDate || !endDate) {
-      alert("Please select both pickup and return dates");
+    const errors: { startDate?: string; endDate?: string } = {};
+    if (!startDate) errors.startDate = "Please select a pickup date";
+    if (!endDate) errors.endDate = "Please select a return date";
+    if (Object.keys(errors).length > 0) {
+      setDateErrors(errors);
       return;
     }
 
     if (dateConflict) {
-      alert(
-        `These dates conflict with an existing booking (${dateConflict.bookingRef}). Please select different dates.`
-      );
       return;
     }
 
@@ -370,17 +382,15 @@ export function VehicleDetailsContent({ id }: { id: string }) {
                 <Calendar className="h-4 w-4" />
                 Pickup Date <span className="text-destructive">*</span>
               </label>
-              <input
-                type="date"
+              <DatePicker
                 id="startDate"
-                name="startDate"
                 value={startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                {...dateInputPickerOnlyProps}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onChange={handleStartDateChange}
                 min={new Date().toISOString().split("T")[0]}
-                required
+                placeholder="Select pickup date"
+                error={!!dateErrors.startDate}
               />
+              <FieldError className="mt-2">{dateErrors.startDate}</FieldError>
             </div>
 
             <div>
@@ -391,17 +401,15 @@ export function VehicleDetailsContent({ id }: { id: string }) {
                 <Calendar className="h-4 w-4" />
                 Return Date <span className="text-destructive">*</span>
               </label>
-              <input
-                type="date"
+              <DatePicker
                 id="endDate"
-                name="endDate"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                {...dateInputPickerOnlyProps}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onChange={handleEndDateChange}
                 min={startDate || new Date().toISOString().split("T")[0]}
-                required
+                placeholder="Select return date"
+                error={!!dateErrors.endDate}
               />
+              <FieldError className="mt-2">{dateErrors.endDate}</FieldError>
             </div>
           </div>
 

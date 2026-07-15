@@ -5,9 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { getVehicles } from "@/lib/api";
-import { formatCurrency, dateInputPickerOnlyProps } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
 import type { VehicleDisplay } from "@/lib/types";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Search,
   Calendar,
@@ -53,15 +55,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [searchStartDate, setSearchStartDate] = useState("");
   const [searchEndDate, setSearchEndDate] = useState("");
+  const [searchErrors, setSearchErrors] = useState<{
+    startDate?: string;
+    endDate?: string;
+  }>({});
+  const [bookingRefError, setBookingRefError] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
 
   const handleStartDateChange = (value: string) => {
     setSearchStartDate(value);
+    setSearchErrors((prev) => ({ ...prev, startDate: undefined }));
     // Keep the return date valid: it can never be before the pickup date
     if (searchEndDate && value && searchEndDate < value) {
       setSearchEndDate(value);
     }
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setSearchEndDate(value);
+    setSearchErrors((prev) => ({ ...prev, endDate: undefined }));
   };
 
   useEffect(() => {
@@ -80,14 +93,21 @@ export default function Home() {
 
   const handleSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const errors: { startDate?: string; endDate?: string } = {};
+    if (!searchStartDate) errors.startDate = "Please select a pickup date";
+    if (!searchEndDate) errors.endDate = "Please select a return date";
+    if (Object.keys(errors).length > 0) {
+      setSearchErrors(errors);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
-    const startDate = formData.get("startDate");
-    const endDate = formData.get("endDate");
     const vehicleType = formData.get("vehicleType");
 
     const params = new URLSearchParams();
-    if (startDate) params.set("startDate", startDate.toString());
-    if (endDate) params.set("endDate", endDate.toString());
+    params.set("startDate", searchStartDate);
+    params.set("endDate", searchEndDate);
     if (vehicleType) params.set("type", vehicleType.toString());
 
     router.push(`/vehicles/search?${params.toString()}`);
@@ -96,8 +116,14 @@ export default function Home() {
   const handleTrackBooking = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const bookingRef = formData.get("bookingRef");
-    router.push(`/track-booking?ref=${bookingRef}`);
+    const bookingRef = (formData.get("bookingRef") as string).trim();
+
+    if (!bookingRef) {
+      setBookingRefError("Please enter your booking reference number");
+      return;
+    }
+
+    router.push(`/track-booking?ref=${encodeURIComponent(bookingRef)}`);
   };
 
   return (
@@ -146,17 +172,15 @@ export default function Home() {
                         <Calendar className="h-4 w-4" />
                         Pickup Date
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         id="startDate"
-                        name="startDate"
                         value={searchStartDate}
-                        onChange={(e) => handleStartDateChange(e.target.value)}
+                        onChange={handleStartDateChange}
                         min={today}
-                        {...dateInputPickerOnlyProps}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        required
+                        placeholder="Select pickup date"
+                        error={!!searchErrors.startDate}
                       />
+                      <FieldError>{searchErrors.startDate}</FieldError>
                     </div>
 
                     <div className="space-y-2">
@@ -167,17 +191,15 @@ export default function Home() {
                         <Calendar className="h-4 w-4" />
                         Return Date
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         id="endDate"
-                        name="endDate"
                         value={searchEndDate}
-                        onChange={(e) => setSearchEndDate(e.target.value)}
+                        onChange={handleEndDateChange}
                         min={searchStartDate || today}
-                        {...dateInputPickerOnlyProps}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        required
+                        placeholder="Select return date"
+                        error={!!searchErrors.endDate}
                       />
+                      <FieldError>{searchErrors.endDate}</FieldError>
                     </div>
 
                     <div className="space-y-2">
@@ -358,9 +380,17 @@ export default function Home() {
                         id="bookingRef"
                         name="bookingRef"
                         placeholder="BOOK-20260104-001"
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        required
+                        onChange={() => setBookingRefError("")}
+                        aria-invalid={!!bookingRefError}
+                        className={cn(
+                          "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                          bookingRefError &&
+                            "border-destructive focus-visible:ring-destructive/40"
+                        )}
                       />
+                      <FieldError className="mt-1.5">
+                        {bookingRefError}
+                      </FieldError>
                     </div>
                   </div>
 

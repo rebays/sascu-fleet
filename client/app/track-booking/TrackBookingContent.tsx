@@ -3,6 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { trackBooking, type TrackingResponse } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Search,
   Info,
@@ -18,6 +20,7 @@ export function TrackBookingContent() {
     TrackingResponse["data"] | null
   >(null);
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const [isExpired, setIsExpired] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +64,12 @@ export function TrackBookingContent() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!trackingNumber.trim()) {
+      setFieldError("Please enter your booking reference number");
+      return;
+    }
+
     searchBooking(trackingNumber);
   };
 
@@ -90,10 +99,18 @@ export function TrackBookingContent() {
                 name="trackingNumber"
                 placeholder="BOOK-20260102-001"
                 value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                required
+                onChange={(e) => {
+                  setTrackingNumber(e.target.value);
+                  setFieldError("");
+                }}
+                aria-invalid={!!fieldError}
+                className={cn(
+                  "w-full rounded-md border border-input bg-background px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  fieldError &&
+                    "border-destructive focus-visible:ring-destructive/40"
+                )}
               />
+              <FieldError className="mt-2">{fieldError}</FieldError>
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Format: BOOK-YYYYMMDD-XXX (e.g., BOOK-20260102-001)

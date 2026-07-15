@@ -8,13 +8,11 @@ import {
   createBooking,
   type GuestBookingData,
 } from "@/lib/api";
-import {
-  formatCurrency,
-  calculateDays,
-  dateInputPickerOnlyProps,
-} from "@/lib/utils";
+import { cn, formatCurrency, calculateDays } from "@/lib/utils";
 import { VEHICLE_TYPE_DISPLAY } from "@/lib/constants";
 import type { VehicleDisplay } from "@/lib/types";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Car,
   Calendar,
@@ -27,6 +25,17 @@ import {
   Loader2,
   ArrowRight,
 } from "lucide-react";
+
+type BookingFormErrors = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  licenseNumber?: string;
+  pickupDate?: string;
+  returnDate?: string;
+  pickupLocation?: string;
+};
 
 export function BookingPageContent() {
   const router = useRouter();
@@ -41,15 +50,70 @@ export function BookingPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [pickupDate, setPickupDate] = useState(startDate || "");
   const [returnDate, setReturnDate] = useState(endDate || "");
+  const [fieldErrors, setFieldErrors] = useState<BookingFormErrors>({});
 
   const today = new Date().toISOString().split("T")[0];
 
+  const clearFieldError = (field: keyof BookingFormErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validateField = (
+    field: keyof BookingFormErrors,
+    value: string
+  ): string | undefined => {
+    switch (field) {
+      case "firstName":
+        return value.trim() ? undefined : "First name is required";
+      case "lastName":
+        return value.trim() ? undefined : "Last name is required";
+      case "email":
+        if (!value.trim()) return "Email address is required";
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+          ? undefined
+          : "Enter a valid email address";
+      case "phone":
+        return value.trim() ? undefined : "Phone number is required";
+      case "licenseNumber":
+        return value.trim() ? undefined : "Driver license number is required";
+      case "pickupDate":
+        return value ? undefined : "Please select a pickup date";
+      case "returnDate":
+        if (!value) return "Please select a return date";
+        return pickupDate && value < pickupDate
+          ? "Return date can't be before the pickup date"
+          : undefined;
+      case "pickupLocation":
+        return value ? undefined : "Please select a pickup location";
+      default:
+        return undefined;
+    }
+  };
+
+  const handleFieldBlur = (
+    field: keyof BookingFormErrors,
+    value: string
+  ) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+  };
+
   const handlePickupDateChange = (value: string) => {
     setPickupDate(value);
+    clearFieldError("pickupDate");
     // Keep the return date valid: it can never be before the pickup date
     if (returnDate && value && returnDate < value) {
       setReturnDate(value);
     }
+  };
+
+  const handleReturnDateChange = (value: string) => {
+    setReturnDate(value);
+    clearFieldError("returnDate");
   };
 
   useEffect(() => {
@@ -76,9 +140,32 @@ export function BookingPageContent() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    const values = {
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      licenseNumber: formData.get("licenseNumber") as string,
+      pickupDate,
+      returnDate,
+      pickupLocation: formData.get("pickupLocation") as string,
+    };
+
+    const errors: BookingFormErrors = {};
+    (Object.keys(values) as (keyof typeof values)[]).forEach((field) => {
+      const message = validateField(field, values[field]);
+      if (message) errors[field] = message;
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError("Please fix the highlighted fields below");
+      return;
+    }
+
+    setSubmitting(true);
 
     if (!vehicleId) {
       setError("No vehicle selected");
@@ -87,15 +174,15 @@ export function BookingPageContent() {
     }
 
     const bookingData: GuestBookingData = {
-      firstName: formData.get("firstName") as string,
-      lastName: formData.get("lastName") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-      licenseNumber: formData.get("licenseNumber") as string,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      phone: values.phone,
+      licenseNumber: values.licenseNumber,
       vehicleId: vehicleId,
-      startDate: formData.get("pickupDate") as string,
-      endDate: formData.get("returnDate") as string,
-      pickupLocation: formData.get("pickupLocation") as string,
+      startDate: pickupDate,
+      endDate: returnDate,
+      pickupLocation: values.pickupLocation,
       additionalNotes: formData.get("additionalNotes") as string,
     };
 
@@ -187,9 +274,18 @@ export function BookingPageContent() {
                     id="firstName"
                     name="firstName"
                     placeholder="John"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) => handleFieldBlur("firstName", e.target.value)}
+                    onChange={() => clearFieldError("firstName")}
+                    aria-invalid={!!fieldErrors.firstName}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.firstName &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.firstName}
+                  </FieldError>
                 </div>
                 <div>
                   <label
@@ -203,14 +299,23 @@ export function BookingPageContent() {
                     id="lastName"
                     name="lastName"
                     placeholder="Doe"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) => handleFieldBlur("lastName", e.target.value)}
+                    onChange={() => clearFieldError("lastName")}
+                    aria-invalid={!!fieldErrors.lastName}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.lastName &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.lastName}
+                  </FieldError>
                 </div>
                 <div>
                   <label
                     htmlFor="email"
-                    className="text-sm font-medium mb-2 block flex items-center gap-2"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
                   >
                     <Mail className="h-4 w-4" />
                     Email Address
@@ -220,14 +325,23 @@ export function BookingPageContent() {
                     id="email"
                     name="email"
                     placeholder="john.doe@example.com"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) => handleFieldBlur("email", e.target.value)}
+                    onChange={() => clearFieldError("email")}
+                    aria-invalid={!!fieldErrors.email}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.email &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.email}
+                  </FieldError>
                 </div>
                 <div>
                   <label
                     htmlFor="phone"
-                    className="text-sm font-medium mb-2 block flex items-center gap-2"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
                   >
                     <Phone className="h-4 w-4" />
                     Phone Number
@@ -237,14 +351,23 @@ export function BookingPageContent() {
                     id="phone"
                     name="phone"
                     placeholder="(555) 123-4567"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                    onChange={() => clearFieldError("phone")}
+                    aria-invalid={!!fieldErrors.phone}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.phone &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.phone}
+                  </FieldError>
                 </div>
                 <div className="md:col-span-2">
                   <label
                     htmlFor="licenseNumber"
-                    className="text-sm font-medium mb-2 block flex items-center gap-2"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
                   >
                     <FileText className="h-4 w-4" />
                     Driver License Number
@@ -254,9 +377,20 @@ export function BookingPageContent() {
                     id="licenseNumber"
                     name="licenseNumber"
                     placeholder="DL123456789"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) =>
+                      handleFieldBlur("licenseNumber", e.target.value)
+                    }
+                    onChange={() => clearFieldError("licenseNumber")}
+                    aria-invalid={!!fieldErrors.licenseNumber}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.licenseNumber &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.licenseNumber}
+                  </FieldError>
                 </div>
               </div>
             </div>
@@ -275,17 +409,17 @@ export function BookingPageContent() {
                   >
                     Pickup Date
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     id="pickupDate"
-                    name="pickupDate"
                     value={pickupDate}
-                    onChange={(e) => handlePickupDateChange(e.target.value)}
+                    onChange={handlePickupDateChange}
                     min={today}
-                    {...dateInputPickerOnlyProps}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    placeholder="Select pickup date"
+                    error={!!fieldErrors.pickupDate}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.pickupDate}
+                  </FieldError>
                 </div>
                 <div>
                   <label
@@ -294,22 +428,22 @@ export function BookingPageContent() {
                   >
                     Return Date
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     id="returnDate"
-                    name="returnDate"
                     value={returnDate}
-                    onChange={(e) => setReturnDate(e.target.value)}
+                    onChange={handleReturnDateChange}
                     min={pickupDate || today}
-                    {...dateInputPickerOnlyProps}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    placeholder="Select return date"
+                    error={!!fieldErrors.returnDate}
                   />
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.returnDate}
+                  </FieldError>
                 </div>
                 <div className="md:col-span-2">
                   <label
                     htmlFor="pickupLocation"
-                    className="text-sm font-medium mb-2 block flex items-center gap-2"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
                   >
                     <MapPin className="h-4 w-4" />
                     Pickup Location
@@ -317,12 +451,23 @@ export function BookingPageContent() {
                   <select
                     id="pickupLocation"
                     name="pickupLocation"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
+                    onBlur={(e) =>
+                      handleFieldBlur("pickupLocation", e.target.value)
+                    }
+                    onChange={() => clearFieldError("pickupLocation")}
+                    aria-invalid={!!fieldErrors.pickupLocation}
+                    className={cn(
+                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldErrors.pickupLocation &&
+                        "border-destructive focus-visible:ring-destructive/40"
+                    )}
                   >
                     <option value="">Select a location</option>
                     <option value="headoffice">Henderson</option>
                   </select>
+                  <FieldError className="mt-1.5">
+                    {fieldErrors.pickupLocation}
+                  </FieldError>
                 </div>
                 <div className="md:col-span-2">
                   <label
