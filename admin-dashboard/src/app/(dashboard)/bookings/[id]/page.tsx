@@ -27,12 +27,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const booking = response?.data;
 
   const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<'confirmed' | 'cancelled' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'approve' | 'reject' | 'cancel' | null>(null);
   const [statusNote, setStatusNote] = useState('');
   const [docType, setDocType] = useState<'invoice' | 'receipt'>('invoice');
+  const [submittingStatus, setSubmittingStatus] = useState(false);
 
   const payments = bookingPayments?.data || [];
   const router = useRouter();
+
+  const pendingStatus = pendingAction === 'approve' ? 'confirmed' : pendingAction ? 'cancelled' : null;
+  const actionLabel = pendingAction === 'approve' ? 'Approve' : pendingAction === 'reject' ? 'Reject' : 'Cancel';
 
   const handlePreview = (type: 'invoice' | 'receipt') => {
     setDocType(type);
@@ -40,7 +44,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleStatusChange = async () => {
-    if (!pendingStatus) return;
+    if (!pendingStatus || submittingStatus) return;
+    setSubmittingStatus(true);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/bookings/admin/${booking._id}/status`,
@@ -57,15 +62,22 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       );
 
-      if (!res.ok) throw new Error();
-      toast.success(`Booking ${pendingStatus === 'confirmed' ? 'approved' : 'rejected'}!`);
+      const result = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(result?.message || 'Failed to update status');
+
+      toast.success(
+        pendingAction === 'approve' ? 'Booking approved!' : pendingAction === 'reject' ? 'Booking rejected!' : 'Booking cancelled!'
+      );
       mutate(`/bookings/${booking._id}`);
       mutate(`/bookings/admin/${booking._id}/payments`);
       mutate('/bookings/admin/all');
       setStatusModalOpen(false);
       setStatusNote('');
-    } catch {
-      toast.error('Failed to update status');
+      setPendingAction(null);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update status');
+    } finally {
+      setSubmittingStatus(false);
     }
   };
 
@@ -148,14 +160,23 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <Button
                   variant="outline"
                   className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  onClick={() => { setPendingStatus('cancelled'); setStatusModalOpen(true); }}
+                  onClick={() => { setPendingAction('reject'); setStatusModalOpen(true); }}
                 >
                   <XCircle className="w-4 h-4 mr-2" /> Reject
                 </Button>
-                <Button onClick={() => { setPendingStatus('confirmed'); setStatusModalOpen(true); }}>
+                <Button onClick={() => { setPendingAction('approve'); setStatusModalOpen(true); }}>
                   <CheckCircle2 className="w-4 h-4 mr-2" /> Approve Booking
                 </Button>
               </>
+            )}
+            {booking.status === 'confirmed' && (
+              <Button
+                variant="outline"
+                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                onClick={() => { setPendingAction('cancel'); setStatusModalOpen(true); }}
+              >
+                <XCircle className="w-4 h-4 mr-2" /> Cancel Booking
+              </Button>
             )}
           </div>
         </div>
@@ -222,7 +243,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-gray-400" /> Payment Summary
                   </h2>
-                  <Badge variant={booking.paymentStatus === 'paid' ? 'success' : 'secondary'} className="capitalize">
+                  <Badge
+                    variant={booking.paymentStatus === 'paid' ? 'success' : booking.paymentStatus === 'refunded' ? 'destructive' : 'secondary'}
+                    className="capitalize"
+                  >
                     {booking.paymentStatus}
                   </Badge>
                 </div>
@@ -393,20 +417,49 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Status Modal */}
-        <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+        <Dialog
+          open={statusModalOpen}
+          onOpenChange={(open) => {
+            setStatusModalOpen(open);
+            if (!open) { setPendingAction(null); setStatusNote(''); }
+          }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                {pendingStatus === 'confirmed'
+                {pendingAction === 'approve'
                   ? <CheckCircle2 className="w-5 h-5 text-green-600" />
                   : <XCircle className="w-5 h-5 text-red-600" />}
-                {pendingStatus === 'confirmed' ? 'Approve' : 'Reject'} Booking?
+                {actionLabel} Booking?
               </DialogTitle>
               <DialogDescription>
                 You are about to mark Booking #{booking.bookingRef} as{' '}
                 <strong className="capitalize">{pendingStatus}</strong>.
               </DialogDescription>
             </DialogHeader>
+
+            {pendingAction === 'cancel' && (
+              <div className="space-y-2">
+                {['partial', 'paid'].includes(booking.paymentStatus) && (
+                  <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-lg p-3">
+                    <CreditCard className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>
+                      This booking has SBD {booking.deposit?.toLocaleString()} recorded as paid. Cancelling will mark
+                      payment status as <strong>refunded</strong> - process the actual refund to the customer separately.
+                    </span>
+                  </div>
+                )}
+                {new Date(booking.startDate) <= new Date() && (
+                  <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-lg p-3">
+                    <Clock className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>This rental's pickup date has already passed. Confirm the vehicle was not handed over before cancelling.</span>
+                  </div>
+                )}
+                <div className="flex items-start gap-2 text-sm text-gray-500 dark:text-slate-400">
+                  <span>The vehicle will become available for other bookings during this period.</span>
+                </div>
+              </div>
+            )}
 
             <div>
               <Label>Administrative Note (optional)</Label>
@@ -419,12 +472,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setStatusModalOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setStatusModalOpen(false)}>
+                {pendingAction === 'cancel' ? 'Back' : 'Cancel'}
+              </Button>
               <Button
-                variant={pendingStatus === 'cancelled' ? 'destructive' : 'default'}
+                variant={pendingAction === 'approve' ? 'default' : 'destructive'}
                 onClick={handleStatusChange}
+                disabled={submittingStatus}
               >
-                Confirm {pendingStatus === 'confirmed' ? 'Approval' : 'Rejection'}
+                {submittingStatus ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Confirm {actionLabel}
               </Button>
             </DialogFooter>
           </DialogContent>

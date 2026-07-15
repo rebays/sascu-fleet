@@ -237,7 +237,7 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
   const existingBooking = await Booking.findById(id).select('status');
   if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
 
-  if (['confirmed', 'completed'].includes(existingBooking.status)) {
+  if (req.user.role !== 'superadmin' && ['confirmed', 'completed'].includes(existingBooking.status)) {
     return res.status(409).json({
       success: false,
       message: `Cannot edit a ${existingBooking.status} booking.`,
@@ -279,7 +279,7 @@ const deleteBookingAdmin = catchAsync(async (req, res) => {
   const existingBooking = await Booking.findById(req.params.id).select('status');
   if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
 
-  if (['confirmed', 'completed'].includes(existingBooking.status)) {
+  if (req.user.role !== 'superadmin' && ['confirmed', 'completed'].includes(existingBooking.status)) {
     return res.status(409).json({
       success: false,
       message: `Cannot delete a ${existingBooking.status} booking.`,
@@ -560,6 +560,14 @@ const updateBookingStatus = catchAsync(async (req, res) => {
     return res.status(404).json({ message: "Booking not found" });
   }
 
+  // Terminal states can't be re-approved or re-cancelled
+  if (["cancelled", "completed"].includes(booking.status)) {
+    return res.status(409).json({
+      success: false,
+      message: `Booking is already ${booking.status} and its status cannot be changed.`,
+    });
+  }
+
   // Pending bookings may overlap each other, so confirmation is the point
   // where double-booking must be prevented
   if (status === "confirmed") {
@@ -584,18 +592,35 @@ const updateBookingStatus = catchAsync(async (req, res) => {
     }
   }
 
+  const wasConfirmed = booking.status === "confirmed";
+  // Cancelling a confirmed booking that already collected payment leaves
+  // money owed back to the customer - flag it instead of silently losing track
+  const needsRefund = status === "cancelled" && ["partial", "paid"].includes(booking.paymentStatus);
+  if (needsRefund) {
+    booking.paymentStatus = "refunded";
+  }
+
+  const actionLabel = status === "confirmed" ? "Approved" : wasConfirmed ? "Cancelled" : "Rejected";
+
   // Record in history
   booking.statusHistory.push({
     status,
     changedBy: req.user.id,
-    note:
-      note || `${status === "confirmed" ? "Approved" : "Rejected"} by admin`,
+    note: note || `${actionLabel} by admin${needsRefund ? " - refund required" : ""}`,
   });
 
   // Update current status
   booking.status = status;
 
   await booking.save();
+
+  // A cancelled booking's invoice is void - stop it showing as outstanding/payable
+  if (status === "cancelled") {
+    await Invoice.findOneAndUpdate(
+      { booking: booking._id, status: { $ne: "cancelled" } },
+      { status: "cancelled" }
+    );
+  }
 
   await booking.populate([
     { path: "user", select: "name email" },
@@ -605,7 +630,7 @@ const updateBookingStatus = catchAsync(async (req, res) => {
 
   res.json({
     success: true,
-    message: `Booking ${status === "confirmed" ? "approved" : "rejected"}`,
+    message: `Booking ${actionLabel.toLowerCase()}`,
     data: booking,
   });
 });

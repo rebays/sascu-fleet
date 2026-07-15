@@ -69,13 +69,15 @@ export default function BookingActions({ booking, onPaymentRecorded, onPreview }
         <Button size="sm" className="w-full" onClick={() => setPaymentOpen(true)}>
           <DollarSign className="w-4 h-4 mr-1.5" /> Record Payment
         </Button>
-        <div className="grid grid-cols-2 gap-2">
+        <div className={`grid gap-2 ${booking.paymentStatus === 'paid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <Button size="sm" variant="outline" onClick={() => onPreview('invoice')}>
             <FileText className="w-4 h-4 mr-1.5" /> Preview Invoice
           </Button>
-          <Button size="sm" variant="outline" onClick={() => onPreview('receipt')}>
-            <Receipt className="w-4 h-4 mr-1.5" /> Preview Receipt
-          </Button>
+          {booking.paymentStatus === 'paid' && (
+            <Button size="sm" variant="outline" onClick={() => onPreview('receipt')}>
+              <Receipt className="w-4 h-4 mr-1.5" /> Preview Receipt
+            </Button>
+          )}
         </div>
       </div>
 

@@ -64,11 +64,13 @@ export default function AdminBookingsPage() {
   const { data: bookingsRes, error: bError, isLoading: bLoading } = useSWR<any>('/bookings/admin/all', fetcher);
   const { data: vehiclesRes, error: vError, isLoading: vLoading } = useSWR<any>('/vehicles', fetcher);
   const { data: usersRes, error: uError, isLoading: uLoading } = useSWR<any>('/users/all', fetcher);
+  const { data: meRes } = useSWR<any>('/users/me', fetcher);
 
 
   const bookings = bookingsRes?.data || [];
   const vehicles = vehiclesRes?.data || vehiclesRes || [];
   const users = usersRes?.data || [];
+  const isSuperAdmin = meRes?.role === 'superadmin';
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const [open, setOpen] = useState(false);
@@ -82,11 +84,9 @@ export default function AdminBookingsPage() {
     endDate: '',
     deposit: '0.00',
     balance: '0.00',
-    status: 'pending',
     driverLicense: '',
     pickupLocation: '',
     locationType: 'in-town',
-    paymentStatus: 'pending',
     totalPrice: '0.00'
   });
 
@@ -182,18 +182,16 @@ export default function AdminBookingsPage() {
       endDate: '',
       deposit: '0.00',
       balance: '0.00',
-      status: 'pending',
       driverLicense: '',
       pickupLocation: '',
       locationType: 'in-town',
-      paymentStatus: 'pending',
       totalPrice: '0.00'
     });
     setCreatingUser(false);
     setOpen(true);
   };
 
-  const isLocked = (booking: any) => booking.status === 'confirmed' || booking.status === 'completed';
+  const isLocked = (booking: any) => !isSuperAdmin && (booking.status === 'confirmed' || booking.status === 'completed');
 
   const openEditModal = (booking: any) => {
     if (isLocked(booking)) return;
@@ -207,8 +205,6 @@ export default function AdminBookingsPage() {
       endDate: booking.endDate.slice(0, 16),
       deposit: booking.deposit.toString(),
       balance: booking.balance.toString(),
-      status: booking.status,
-      paymentStatus: booking.paymentStatus,
       driverLicense: booking.driversLicense || '',
       pickupLocation: booking.pickupLocation || '',
       locationType: booking.locationType || 'in-town',
@@ -263,8 +259,6 @@ export default function AdminBookingsPage() {
       endDate: new Date(form.endDate).toISOString(),
       deposit: parseFloat(form.deposit) || 0,
       balance: totalPrice - (parseFloat(form.deposit) || 0),
-      status: form.status,
-      paymentStatus: form.paymentStatus,
       driversLicense: form.driverLicense,
       pickupLocation: form.pickupLocation,
       locationType: form.locationType,
@@ -792,34 +786,6 @@ export default function AdminBookingsPage() {
             )}
           </div>
 
-          {/* Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Booking Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Payment Status</Label>
-              <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
       </div>
 
