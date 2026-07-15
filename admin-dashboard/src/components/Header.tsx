@@ -16,9 +16,6 @@ export default function Header() {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-          A
-        </div>
       </div>
     </header>
   );
