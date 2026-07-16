@@ -18,7 +18,7 @@ const menuItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/bookings", label: "Bookings", icon: Receipt },
   { href: "/vehicles", label: "Vehicles", icon: Car },
-  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/users", label: "Users", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

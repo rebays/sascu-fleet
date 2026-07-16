@@ -93,6 +93,37 @@ const updateUser = catchAsync(async (req, res) => {
   });
 });
 
+// Super admin only: change a user's role
+const changeUserRole = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+
+  const allowedRoles = ['user', 'admin', 'superadmin'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  if (id === req.user.id) {
+    return res.status(400).json({ message: 'You cannot change your own role' });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    id,
+    { role },
+    { new: true, runValidators: true }
+  ).select('-password');
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  res.json({
+    success: true,
+    message: `${user.name}'s role updated to ${role}`,
+    data: user,
+  });
+});
+
 //Admin only
 const deleteUser = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -222,4 +253,4 @@ const updatePassword = catchAsync(async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser, toggleMembership, updatePassword, getAdmins, createAdmin, resetAdminPassword };
+module.exports = { getMe, updateMe, getAllUsers, updateUser, deleteUser, toggleMembership, updatePassword, getAdmins, createAdmin, resetAdminPassword, changeUserRole };
