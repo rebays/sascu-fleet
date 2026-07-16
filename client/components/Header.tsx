@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Header() {
@@ -20,16 +19,21 @@ export default function Header() {
             href="/"
             className="flex items-center gap-2 font-bold text-xl text-black"
           >
-            <div className="relative w-9 h-9 shrink-0">
-              <Image
-                src="/sascu-logo-ori.png"
-                alt="SASCU"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-            <span>SASCU</span>
+            <div
+              aria-hidden="true"
+              className="relative w-9 h-9 shrink-0 bg-primary"
+              style={{
+                maskImage: "url(/sascu-logo-ori.png)",
+                maskSize: "contain",
+                maskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskImage: "url(/sascu-logo-ori.png)",
+                WebkitMaskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+              }}
+            />
+            <span className="text-primary">SASCU</span>
           </Link>
 
           {/* Navigation and Button */}

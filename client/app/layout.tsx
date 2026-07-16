@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${publicSans.variable} antialiased`}
+        className={`${poppins.variable} ${publicSans.variable} antialiased bg-linear-to-b from-primary/7 via-white to-white bg-fixed`}
       >
         <div className="flex min-h-screen flex-col">
           <Header />

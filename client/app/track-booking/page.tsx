@@ -8,7 +8,7 @@ export default function TrackBookingPage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-muted/60 via-muted/40 to-background border-b">
+      <section className="relative bg-linear-to-br from-primary/10 via-primary/5 to-background border-b">
         <div className="container mx-auto px-4 md:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">

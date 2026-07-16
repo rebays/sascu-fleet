@@ -23,25 +23,16 @@ import Breadcrumb from "@/components/Breadcrumb";
 
 export default function AboutPage() {
   return (
-    <div className="-mt-16 lg:-mt-[88px]">
-      {/* Hero Section with Background Image */}
-      <section className="relative h-[calc(50vh+64px)] lg:h-[calc(50vh+88px)] min-h-[464px] lg:min-h-[488px] flex items-center pt-16 lg:pt-24">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('https://images.pexels.com/photos/492510/pexels-photo-492510.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
-        </div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-white">
-              SASCU
+    <div>
+      {/* Hero Section */}
+      <section className="relative bg-linear-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container mx-auto px-4 md:px-8 py-16">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Our Story
             </h1>
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl">
-              INSERT TAGLINE HERE
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              From humble beginnings to becoming your trusted mobility partner
             </p>
           </div>
         </div>
@@ -56,12 +47,7 @@ export default function AboutPage() {
 
         {/* Our Story */}
         <div className="mb-20">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Story</h2>
-            <p className="text-lg text-muted-foreground">
-              From humble beginnings to becoming your trusted mobility partner
-            </p>
-          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="flex gap-4">
@@ -144,9 +130,9 @@ export default function AboutPage() {
                 <MapPin className="h-5 w-5 text-primary" />
                 <h3 className="font-bold">Main Office</h3>
               </div>
-              <p className="text-sm text-muted-foreground">123 Fleet Street</p>
-              <p className="text-sm text-muted-foreground">Downtown District</p>
-              <p className="text-sm text-muted-foreground">City, State 12345</p>
+              <p className="text-sm text-muted-foreground">Solomon Airlines Credit Union</p>
+              <p className="text-sm text-muted-foreground">Henderson</p>
+              <p className="text-sm text-muted-foreground">Honiara, Solomon Islands</p>
             </div>
 
             <div className="bg-card border rounded-lg p-6">

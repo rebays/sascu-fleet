@@ -100,18 +100,18 @@ export default function Home() {
   return (
     <div className="-mt-16 lg:-mt-[88px] mb-0">
       {/* Hero Section with Search Overlay */}
-      <section className="relative h-[calc(80vh+64px)] lg:h-[calc(66vh+88px)] min-h-[588px] flex items-center pt-16 lg:pt-24">
+      <section className="relative h-screen flex items-center pt-16 lg:pt-24">
         {/* Background Video with Overlay */}
         <div className="absolute inset-0 overflow-hidden">
           <video
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover opacity-60"
             src="/hero-vid.webm"
             autoPlay
             loop
             muted
             playsInline
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/40"></div>
+          <div className="absolute inset-0 bg-linear-to-b from-green-950/80 to-green-950"></div>
         </div>
 
         {/* Content Container */}
@@ -119,11 +119,11 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Hero Text - Left Side */}
             <div className="text-white">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-                Book A Vehicle
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-white">
+                 <span className="text-primary">Book.</span> Drive. Repeat.
               </h1>
-              <p className="text-lg md:text-xl text-white/90 max-w-2xl mb-6">
-                Insert SASCU description here
+              <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-6">
+                The Official Vehicle Booking Platform for SASCU.
               </p>
             </div>
 
@@ -211,9 +211,9 @@ export default function Home() {
       </section>
 
       {/* Vehicles Section */}
-      <section className="container mx-auto px-4 md:px-8 py-16">
+      <section className="container mx-auto px-4 md:px-8 py-16 bg-white">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Fleet</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Our Fleet</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Choose from our diverse selection of well-maintained vehicles
           </p>
