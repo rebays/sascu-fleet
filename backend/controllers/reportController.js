@@ -274,7 +274,7 @@ const getBookingsExport = catchAsync(async (req, res) => {
   endDate.setHours(23, 59, 59, 999);
 
   const bookings = await Booking.find({ createdAt: { $gte: startDate, $lte: endDate } })
-    .populate("user", "name email phone")
+    .populate("user", "name email phone memberId")
     .populate("vehicle", "make model licensePlate type")
     .sort({ createdAt: -1 })
     .lean();
@@ -301,6 +301,7 @@ const getBookingsExport = catchAsync(async (req, res) => {
     balance: b.balance,
     pickupLocation: b.pickupLocation,
     driversLicense: b.driversLicense,
+    memberId: b.memberId || b.user?.memberId || "",
     createdAt: b.createdAt,
     customer: {
       name: b.user?.name || "N/A",

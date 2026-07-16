@@ -217,6 +217,7 @@ export interface GuestBookingData {
   email: string;
   phone: string;
   licenseNumber: string;
+  memberId?: string;
   vehicleId: string;
   startDate: string;
   endDate: string;
@@ -235,6 +236,7 @@ export interface BookingResponse {
       email: string;
       phone: string;
       licenseNumber: string;
+      memberId?: string;
     };
   };
 }

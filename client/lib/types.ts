@@ -37,6 +37,7 @@ export interface Booking {
   bookingRef: string;
   deposit: number;
   balance: number;
+  memberId?: string;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   payments: Payment[];
@@ -50,6 +51,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  memberId?: string;
   role: UserRole;
   createdAt: string;
   updatedAt: string;

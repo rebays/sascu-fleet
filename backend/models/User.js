@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  memberId: { type: String },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 }, { timestamps: true });

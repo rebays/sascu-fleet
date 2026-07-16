@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Car, Mail, Phone, FileText,
   Clock, CheckCircle2, XCircle, Loader, ArrowRight, ArrowLeft,
-  ShieldCheck, CreditCard, MapPin, Receipt
+  ShieldCheck, CreditCard, MapPin, Receipt, IdCard
 } from 'lucide-react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/api';
@@ -368,6 +368,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <div className="min-w-0">
                   <p className="text-xs text-green-700 dark:text-green-400 font-medium">Driver's License</p>
                   <p className="text-sm font-semibold text-green-800 dark:text-green-300 truncate">{booking.driversLicense}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2.5 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40">
+                <IdCard className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-blue-700 dark:text-blue-400 font-medium">SASCU Member ID</p>
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 truncate">{booking.memberId || booking.user?.memberId || 'Not provided'}</p>
                 </div>
               </div>
             </Card>

@@ -69,7 +69,7 @@ const getAllUsers = catchAsync(async (req, res) => {
 });
 const updateUser = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const { name, email, phone } = req.body;
+  const { name, email, phone, memberId } = req.body;
 
   // Prevent changing role via this route (use separate endpoint if needed)
   if (req.body.role) {
@@ -80,7 +80,7 @@ const updateUser = catchAsync(async (req, res) => {
 
   const user = await User.findByIdAndUpdate(
     id,
-    { name, email, phone },
+    { name, email, phone, memberId },
     { new: true, runValidators: true }
   ).select('-password');
 

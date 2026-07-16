@@ -85,6 +85,7 @@ export default function AdminBookingsPage() {
     deposit: '0.00',
     balance: '0.00',
     driverLicense: '',
+    memberId: '',
     pickupLocation: '',
     locationType: 'in-town',
     totalPrice: '0.00'
@@ -115,7 +116,9 @@ export default function AdminBookingsPage() {
         b.user?.name?.toLowerCase().includes(lower) ||
         b.user?.email?.toLowerCase().includes(lower) ||
         b.vehicle?.make?.toLowerCase().includes(lower) ||
-        b.vehicle?.model?.toLowerCase().includes(lower)
+        b.vehicle?.model?.toLowerCase().includes(lower) ||
+        b.memberId?.toLowerCase().includes(lower) ||
+        b.user?.memberId?.toLowerCase().includes(lower)
       );
     }
 
@@ -183,6 +186,7 @@ export default function AdminBookingsPage() {
       deposit: '0.00',
       balance: '0.00',
       driverLicense: '',
+      memberId: '',
       pickupLocation: '',
       locationType: 'in-town',
       totalPrice: '0.00'
@@ -206,6 +210,7 @@ export default function AdminBookingsPage() {
       deposit: booking.deposit.toString(),
       balance: booking.balance.toString(),
       driverLicense: booking.driversLicense || '',
+      memberId: booking.memberId || '',
       pickupLocation: booking.pickupLocation || '',
       locationType: booking.locationType || 'in-town',
       totalPrice: booking.totalPrice.toString(),
@@ -260,6 +265,7 @@ export default function AdminBookingsPage() {
       deposit: parseFloat(form.deposit) || 0,
       balance: totalPrice - (parseFloat(form.deposit) || 0),
       driversLicense: form.driverLicense,
+      memberId: form.memberId,
       pickupLocation: form.pickupLocation,
       locationType: form.locationType,
       totalPrice: totalPrice,
@@ -373,7 +379,7 @@ export default function AdminBookingsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
-              placeholder="Search by ref, customer, vehicle..."
+              placeholder="Search by ref, customer, vehicle, member ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 w-96"
@@ -434,6 +440,9 @@ export default function AdminBookingsPage() {
                   <div className="min-w-0">
                     <p className="text-xs font-mono text-gray-500 dark:text-slate-400 mb-0.5">#{b.bookingRef}</p>
                     <p className="font-semibold truncate">{b.user?.name || 'N/A'}</p>
+                    {(b.memberId || b.user?.memberId) && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 truncate">Member ID: {b.memberId || b.user?.memberId}</p>
+                    )}
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <Badge variant={b.status === 'confirmed' ? 'success' : b.status === 'cancelled' ? 'destructive' : 'outline'} className="capitalize">
@@ -518,7 +527,12 @@ export default function AdminBookingsPage() {
                 {paginatedBookings.map((b: any) => (
                   <tr key={b._id} className="border-b border-gray-100 dark:border-slate-700 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-slate-400">#{b.bookingRef}</td>
-                    <td className="px-4 py-3 font-medium">{b.user?.name || 'N/A'}</td>
+                    <td className="px-4 py-3 font-medium">
+                      {b.user?.name || 'N/A'}
+                      {(b.memberId || b.user?.memberId) && (
+                        <p className="text-xs font-normal text-blue-600 dark:text-blue-400">Member ID: {b.memberId || b.user?.memberId}</p>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {b.vehicle?.make} {b.vehicle?.model}{' '}
                       <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">{b.vehicle?.licensePlate}</span>
@@ -691,6 +705,20 @@ export default function AdminBookingsPage() {
             />
             <p className="text-sm text-gray-500 mt-1">
               Required for booking confirmation
+            </p>
+          </div>
+
+          {/* Member ID */}
+          <div>
+            <Label>SASCU Member ID</Label>
+            <Input
+              type="text"
+              placeholder="e.g. SASCU-00123"
+              value={form.memberId || ''}
+              onChange={(e) => setForm({ ...form, memberId: e.target.value })}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Optional — only for SASCU members
             </p>
           </div>
 

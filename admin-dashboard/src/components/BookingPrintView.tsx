@@ -55,6 +55,9 @@ export default function BookingPrintView({ booking, payments, docType }: PrintTe
           {booking.driversLicense && (
             <p className="text-gray-600 text-sm mt-1">License: {booking.driversLicense}</p>
           )}
+          {(booking.memberId || booking.user?.memberId) && (
+            <p className="text-gray-600 text-sm mt-1">Member ID: {booking.memberId || booking.user?.memberId}</p>
+          )}
         </div>
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Booking Details</h3>

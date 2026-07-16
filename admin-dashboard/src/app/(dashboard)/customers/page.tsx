@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader, IdCard } from 'lucide-react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/api';
 
@@ -33,6 +33,7 @@ export default function CustomersPage() {
     phone: '',
     password: '',
     isMember: false,
+    memberId: '',
   });
   const [search, setSearch] = useState('');
 
@@ -52,7 +53,7 @@ export default function CustomersPage() {
 
   const openCreateModal = () => {
     setEditing(null);
-    setForm({ name: '', email: '', phone: '', password: '', isMember: false });
+    setForm({ name: '', email: '', phone: '', password: '', isMember: false, memberId: '' });
     setOpen(true);
   };
 
@@ -64,6 +65,7 @@ export default function CustomersPage() {
       phone: user.phone || '',
       password: '', // never pre-fill password
       isMember: user.isMember || false,
+      memberId: user.memberId || '',
     });
     setOpen(true);
   };
@@ -87,8 +89,8 @@ export default function CustomersPage() {
         : `${process.env.NEXT_PUBLIC_API_URL}/auth/register`;
 
       const payload = editing
-        ? { name: form.name, email: form.email, phone: form.phone }
-        : { name: form.name, email: form.email, password: form.password || 'temp123456', phone: form.phone };
+        ? { name: form.name, email: form.email, phone: form.phone, memberId: form.memberId }
+        : { name: form.name, email: form.email, password: form.password || 'temp123456', phone: form.phone, memberId: form.memberId };
 
       const res = await fetch(url, {
         method: editing ? 'PUT' : 'POST',
@@ -203,6 +205,12 @@ export default function CustomersPage() {
                       <span>{c.phone}</span>
                     </div>
                   )}
+                  {c.memberId && (
+                    <div className="flex items-center gap-2">
+                      <IdCard className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
+                      <span>{c.memberId}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -243,6 +251,7 @@ export default function CustomersPage() {
                   <th className="text-left p-4 font-medium">Phone</th>
                   <th className="text-left p-4 font-medium">Role</th>
                   <th className="text-left p-4 font-medium">Membership</th>
+                  <th className="text-left p-4 font-medium">Member ID</th>
                   <th className="text-right p-4 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -269,6 +278,7 @@ export default function CustomersPage() {
                       )}
 
                     </td>
+                    <td className="p-4 text-gray-600 dark:text-slate-300">{c.memberId || '-'}</td>
                     <td className="p-4 text-right">
                       <Button size="sm" onClick={() => openEditModal(c)} className="mr-2">
                         <Edit className="w-4 h-4" />
@@ -318,6 +328,14 @@ export default function CustomersPage() {
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="+27 82 123 4567"
+              />
+            </div>
+            <div>
+              <Label>SASCU Member ID (optional)</Label>
+              <Input
+                value={form.memberId}
+                onChange={(e) => setForm({ ...form, memberId: e.target.value })}
+                placeholder="e.g. SASCU-00123"
               />
             </div>
             {!editing && (

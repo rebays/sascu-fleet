@@ -9,7 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 
 const register = catchAsync(async (req, res) => {
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, memberId } = req.body;
 
   console.log(req.body);
 
@@ -30,7 +30,13 @@ const register = catchAsync(async (req, res) => {
   if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  const user = await User.create({ name, email, password: hashedPassword, phone });
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    phone,
+    memberId: memberId || undefined,
+  });
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 

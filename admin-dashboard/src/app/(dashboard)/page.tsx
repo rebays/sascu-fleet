@@ -171,6 +171,7 @@ export default function DashboardPage() {
       Balance: b.balance,
       'Pickup Location': b.pickupLocation || '',
       "Driver's License": b.driversLicense || '',
+      'Member ID': b.memberId || '',
       'Booked On': format(new Date(b.createdAt), 'yyyy-MM-dd HH:mm'),
     }));
     if (bookingRows.length > 0) {

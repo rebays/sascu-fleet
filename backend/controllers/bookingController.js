@@ -16,6 +16,7 @@ const createBooking = catchAsync(async (req, res) => {
     email,
     phone,
     licenseNumber,
+    memberId,
     vehicleId,
     startDate,
     endDate,
@@ -88,6 +89,7 @@ const createBooking = catchAsync(async (req, res) => {
     deposit: 0,
     balance: totalPrice,
     driversLicense: licenseNumber,
+    memberId,
     pickupLocation,
     note: additionalNotes,
     status: "pending",
@@ -133,6 +135,7 @@ const createBooking = catchAsync(async (req, res) => {
         email: user.email,
         phone: user.phone,
         licenseNumber,
+        memberId: booking.memberId,
       },
     },
   });
@@ -148,7 +151,7 @@ const getMyBookings = catchAsync(async (req, res) => {
 
 const getAllBookings = catchAsync(async (req, res) => {
   const bookings = await Booking.find()
-    .populate("user", "name email phone")
+    .populate("user", "name email phone memberId")
     .populate("vehicle", "make model licensePlate type")
     .sort({ createdAt: -1 });
 
@@ -161,7 +164,7 @@ const getAllBookings = catchAsync(async (req, res) => {
 
 const getBookingById = catchAsync(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
-    .populate("user", "name email")
+    .populate("user", "name email memberId")
     .populate(
       "vehicle",
       "make model licensePlate images pricePerDay pricePerHalfDay pricePerDayMember pricePerHalfDayMember pricePerDayOutOfTown pricePerHalfDayOutOfTown pricePerDayMemberOutOfTown pricePerHalfDayMemberOutOfTown"
@@ -174,7 +177,7 @@ const getBookingById = catchAsync(async (req, res) => {
 
 const getBookingByRef = catchAsync(async (req, res) => {
   const booking = await Booking.findOne({ bookingRef: req.params.ref })
-    .populate("user", "name email phone")
+    .populate("user", "name email phone memberId")
     .populate("vehicle", "make model year licensePlate images location pricePerDay pricePerHour");
 
   if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -350,7 +353,7 @@ const recordPayment = catchAsync(async (req, res) => {
 
   // Populate everything for frontend
   await booking.populate([
-    { path: "user", select: "name email" },
+    { path: "user", select: "name email memberId" },
     { path: "vehicle", select: "make model licensePlate images" },
   ]);
 
@@ -637,7 +640,7 @@ const updateBookingStatus = catchAsync(async (req, res) => {
   }
 
   await booking.populate([
-    { path: "user", select: "name email" },
+    { path: "user", select: "name email memberId" },
     { path: "vehicle", select: "make model licensePlate" },
     { path: "statusHistory.changedBy", select: "name" },
   ]);

@@ -21,6 +21,7 @@ import {
   Mail,
   Phone,
   FileText,
+  IdCard,
   AlertCircle,
   Loader2,
   ArrowRight,
@@ -179,6 +180,7 @@ export function BookingPageContent() {
       email: values.email,
       phone: values.phone,
       licenseNumber: values.licenseNumber,
+      memberId: (formData.get("memberId") as string) || undefined,
       vehicleId: vehicleId,
       startDate: pickupDate,
       endDate: returnDate,
@@ -391,6 +393,26 @@ export function BookingPageContent() {
                   <FieldError className="mt-1.5">
                     {fieldErrors.licenseNumber}
                   </FieldError>
+                </div>
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="memberId"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
+                  >
+                    <IdCard className="h-4 w-4" />
+                    SASCU Member ID (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="memberId"
+                    name="memberId"
+                    placeholder="e.g. SASCU-00123"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    If you&apos;re a SASCU member, enter your member ID to
+                    receive member pricing.
+                  </p>
                 </div>
               </div>
             </div>
