@@ -19,11 +19,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SASCU Rental",
   description: "Vehicle Rental System",
-  icons: {
-    icon: "/sascu-logo-ori.png",
-    shortcut: "/sascu-logo-ori.png",
-    apple: "/sascu-logo-ori.png",
-  },
 };
 
 export default function RootLayout({
