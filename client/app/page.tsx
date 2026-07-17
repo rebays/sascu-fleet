@@ -111,7 +111,7 @@ export default function Home() {
             muted
             playsInline
           />
-          <div className="absolute inset-0 bg-linear-to-b from-green-950/80 to-green-950"></div>
+          <div className="absolute inset-0 bg-linear-to-b from-black to-black/70"></div>
         </div>
 
         {/* Content Container */}
