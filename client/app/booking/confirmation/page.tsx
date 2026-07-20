@@ -18,10 +18,10 @@ import { BookingConfirmationContent } from "./BookingConfirmationContent";
 
 export default function BookingConfirmationPage() {
   return (
-    <div>
+    <div className="-mt-[108px] md:-mt-[88px]">
       {/* Hero Section - Success Style */}
       <section className="relative bg-gradient-to-br from-green-50 via-green-50/50 to-background border-b border-green-200">
-        <div className="container mx-auto px-4 md:px-8 py-16">
+        <div className="container mx-auto px-4 md:px-8 pt-36 md:pt-24 pb-16">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 border-4 border-green-200 mb-6">
               <CheckCircle className="h-10 w-10 text-green-600" />

@@ -6,10 +6,10 @@ import { TrackBookingContent } from "./TrackBookingContent";
 
 export default function TrackBookingPage() {
   return (
-    <div>
+    <div className="-mt-[108px] md:-mt-[88px]">
       {/* Hero Section */}
       <section className="relative bg-linear-to-br from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 md:px-8 py-16">
+        <div className="container mx-auto px-4 md:px-8 pt-36 md:pt-24 pb-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
               Track Your Booking

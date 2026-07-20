@@ -8,6 +8,14 @@ const nodemailer = require("nodemailer");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 const bcrypt = require("bcryptjs");
+const {
+  sendAdminBookingNotification,
+  sendBookingReceivedEmail,
+  sendBookingStatusEmail,
+  sendBookingUpdatedEmail,
+  sendBookingDeletedEmail,
+  sendPaymentReceivedEmail,
+} = require("../utils/bookingEmails");
 
 const createBooking = catchAsync(async (req, res) => {
   const {
@@ -111,6 +119,11 @@ const createBooking = catchAsync(async (req, res) => {
 
   await booking.populate("vehicle");
   await booking.populate("user", "name email phone");
+
+  await Promise.all([
+    sendAdminBookingNotification(booking),
+    sendBookingReceivedEmail(booking),
+  ]);
 
   res.status(201).json({
     success: true,
@@ -244,6 +257,7 @@ const createBookingAdmin = catchAsync(async (req, res) => {
   }
 
   await booking.populate("user vehicle");
+  await sendBookingReceivedEmail(booking);
   res.status(201).json({ success: true, data: booking });
 });
 
@@ -289,11 +303,16 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
 
   if (!booking) return res.status(404).json({ message: "Booking not found" });
 
+  await sendBookingUpdatedEmail(booking);
+
   res.json({ success: true, data: booking });
 });
 
 const deleteBookingAdmin = catchAsync(async (req, res) => {
-  const existingBooking = await Booking.findById(req.params.id).select('status');
+  const existingBooking = await Booking.findById(req.params.id)
+    .select('status user vehicle bookingRef')
+    .populate("user", "name email")
+    .populate("vehicle", "make model");
   if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
 
   if (req.user.role !== 'superadmin' && ['confirmed', 'completed'].includes(existingBooking.status)) {
@@ -303,7 +322,9 @@ const deleteBookingAdmin = catchAsync(async (req, res) => {
     });
   }
 
-  const booking = await Booking.findByIdAndDelete(req.params.id);
+  await Booking.findByIdAndDelete(req.params.id);
+
+  await sendBookingDeletedEmail(existingBooking);
 
   res.json({ success: true, message: "Booking deleted" });
 });
@@ -358,6 +379,8 @@ const recordPayment = catchAsync(async (req, res) => {
   ]);
 
   await payment.populate("paidBy", "name");
+
+  await sendPaymentReceivedEmail(booking, payment);
 
   res.status(201).json({
     success: true,
@@ -644,6 +667,8 @@ const updateBookingStatus = catchAsync(async (req, res) => {
     { path: "vehicle", select: "make model licensePlate" },
     { path: "statusHistory.changedBy", select: "name" },
   ]);
+
+  await sendBookingStatusEmail(booking, actionLabel, note);
 
   res.json({
     success: true,
