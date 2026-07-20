@@ -10,7 +10,7 @@ const footer = `<br><p>Best regards,<br>${COMPANY_NAME} Team</p>`;
 
 // Sent to the ops/admin inbox whenever a new booking comes in.
 const sendAdminBookingNotification = async (booking) => {
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.COMPANY_EMAIL;
   if (!adminEmail) return;
 
   await sendMail({
