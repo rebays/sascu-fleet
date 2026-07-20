@@ -8,6 +8,7 @@ const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 const bcrypt = require("bcryptjs");
 const { sendMail } = require("../utils/mailer");
+const { renderEmail } = require("../utils/emailTemplate");
 const {
   sendAdminBookingNotification,
   sendBookingReceivedEmail,
@@ -422,22 +423,18 @@ const sendInvoiceEmail = catchAsync(async (req, res) => {
       to: booking.user.email,
       cc: "gsaemane@flysolomons.com",
       subject: `Invoice #${booking.bookingRef} - Vehicle Booking`,
-      html: `
-        <h2>Hi ${booking.user.name},</h2>
+      html: renderEmail(`
+        <h2 style="margin-top:0;">Hi ${booking.user.name},</h2>
         <p>Thank you for your booking! Please find your invoice attached.</p>
-        <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-        <p><strong>Vehicle:</strong> ${booking.vehicle.make} ${
-        booking.vehicle.model
-      }</p>
-        <p><strong>Total Amount:</strong> SBD${booking.totalPrice}</p>
-        <p><strong>Amount Paid:</strong> SBD${booking.deposit || 0}</p>
-        <p><strong>Balance Due:</strong> SBD${
-          booking.balance || booking.totalPrice
-        }</p>
-        <br>
-        <p>Best regards,<br>SASCU Rentals Team</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; font-size:14px; margin:16px 0;">
+          <tr><td style="padding:4px 0; color:#6b7280; width:150px;">Booking Ref</td><td style="padding:4px 0; color:#111827; font-weight:600;">${booking.bookingRef}</td></tr>
+          <tr><td style="padding:4px 0; color:#6b7280;">Vehicle</td><td style="padding:4px 0; color:#111827; font-weight:600;">${booking.vehicle.make} ${booking.vehicle.model}</td></tr>
+          <tr><td style="padding:4px 0; color:#6b7280;">Total Amount</td><td style="padding:4px 0; color:#111827; font-weight:600;">SBD${booking.totalPrice}</td></tr>
+          <tr><td style="padding:4px 0; color:#6b7280;">Amount Paid</td><td style="padding:4px 0; color:#111827; font-weight:600;">SBD${booking.deposit || 0}</td></tr>
+          <tr><td style="padding:4px 0; color:#6b7280;">Balance Due</td><td style="padding:4px 0; color:#111827; font-weight:600;">SBD${booking.balance || booking.totalPrice}</td></tr>
+        </table>
         <p>Please come back soon!</p>
-      `,
+      `),
       attachments: [
         {
           filename: `Invoice-${booking.bookingRef}.pdf`,
@@ -523,11 +520,11 @@ const sendReceiptEmail = catchAsync(async (req, res) => {
       to: booking.user.email,
       cc: 'gsaemane@flysolomons.com',
       subject: `Payment Receipt - ${booking.bookingRef}`,
-      html: `
-        <h2>Hi ${booking.user.name},</h2>
+      html: renderEmail(`
+        <h2 style="margin-top:0;">Hi ${booking.user.name},</h2>
         <p>Thank you for your payment. Please find your receipt attached.</p>
         <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-      `,
+      `),
       attachments: [{ filename: `Receipt-${booking.bookingRef}.pdf`, content: pdfBuffer }],
     });
 

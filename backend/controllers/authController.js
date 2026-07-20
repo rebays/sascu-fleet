@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const catchAsync = require('../utils/catchAsync');
 const { sendMail } = require('../utils/mailer');
+const { renderEmail, renderButton } = require('../utils/emailTemplate');
 
 
 const register = catchAsync(async (req, res) => {
@@ -86,19 +87,15 @@ const forgotPassword = catchAsync(async (req, res) => {
   const sent = await sendMail({
     to: user.email,
     subject: 'SASCU Rental - Password Reset Request',
-    html: `
-      <h2>Reset Your Password</h2>
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Reset Your Password</h2>
       <p>Hello ${user.name || 'User'},</p>
       <p>You requested a password reset for your SASCU Rental account.</p>
       <p>Click the button below to set a new password:</p>
-      <a href="${resetUrl}"
-         style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-        Reset Password
-      </a>
+      <p style="margin:24px 0;">${renderButton('Reset Password', resetUrl)}</p>
       <p>This link will expire in 1 hour for security reasons.</p>
       <p>If you didn't request this, you can safely ignore this email.</p>
-      <p>Best regards,<br>SASCU Rental Team</p>
-    `,
+    `),
   });
 
   if (!sent) {

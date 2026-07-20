@@ -1,4 +1,5 @@
-const { sendMail, COMPANY_NAME } = require('./mailer');
+const { sendMail } = require('./mailer');
+const { renderEmail, renderStatusBadge } = require('./emailTemplate');
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-ZA');
 const money = (n) => `SBD${Number(n || 0).toFixed(2)}`;
@@ -6,7 +7,18 @@ const money = (n) => `SBD${Number(n || 0).toFixed(2)}`;
 const vehicleLabel = (vehicle) =>
   vehicle ? `${vehicle.make || ''} ${vehicle.model || ''}`.trim() : 'N/A';
 
-const footer = `<br><p>Best regards,<br>${COMPANY_NAME} Team</p>`;
+const detailRow = (label, value) => `
+  <tr>
+    <td style="padding:4px 0; color:#6b7280; width:150px;">${label}</td>
+    <td style="padding:4px 0; color:#111827; font-weight:600;">${value}</td>
+  </tr>
+`;
+
+const detailsTable = (rows) => `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; font-size:14px; margin:16px 0;">
+    ${rows.join('')}
+  </table>
+`;
 
 // Sent to the ops/admin inbox whenever a new booking comes in.
 const sendAdminBookingNotification = async (booking) => {
@@ -16,16 +28,18 @@ const sendAdminBookingNotification = async (booking) => {
   await sendMail({
     to: adminEmail,
     subject: `New Booking - ${booking.bookingRef}`,
-    html: `
-      <h2>New booking received</h2>
-      <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-      <p><strong>Customer:</strong> ${booking.user?.name || ''} (${booking.user?.email || ''})</p>
-      <p><strong>Phone:</strong> ${booking.user?.phone || 'N/A'}</p>
-      <p><strong>Vehicle:</strong> ${vehicleLabel(booking.vehicle)}</p>
-      <p><strong>Period:</strong> ${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}</p>
-      <p><strong>Total:</strong> ${money(booking.totalPrice)}</p>
-      <p><strong>Status:</strong> ${booking.status}</p>
-    `,
+    html: renderEmail(`
+      <h2 style="margin-top:0;">New booking received</h2>
+      <p>A new booking has come in. ${renderStatusBadge(booking.status)}</p>
+      ${detailsTable([
+        detailRow('Booking Ref', booking.bookingRef),
+        detailRow('Customer', `${booking.user?.name || ''} (${booking.user?.email || ''})`),
+        detailRow('Phone', booking.user?.phone || 'N/A'),
+        detailRow('Vehicle', vehicleLabel(booking.vehicle)),
+        detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
+        detailRow('Total', money(booking.totalPrice)),
+      ])}
+    `),
   });
 };
 
@@ -37,17 +51,18 @@ const sendBookingReceivedEmail = async (booking) => {
   await sendMail({
     to,
     subject: `Booking Received - ${booking.bookingRef}`,
-    html: `
-      <h2>Hi ${booking.user?.name || ''},</h2>
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
       <p>We've received your booking request. Here are the details:</p>
-      <p><strong>Booking Ref:</strong> ${booking.bookingRef}</p>
-      <p><strong>Vehicle:</strong> ${vehicleLabel(booking.vehicle)}</p>
-      <p><strong>Period:</strong> ${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}</p>
-      <p><strong>Total Amount:</strong> ${money(booking.totalPrice)}</p>
-      <p><strong>Status:</strong> ${booking.status}</p>
+      ${detailsTable([
+        detailRow('Booking Ref', booking.bookingRef),
+        detailRow('Vehicle', vehicleLabel(booking.vehicle)),
+        detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
+        detailRow('Total Amount', money(booking.totalPrice)),
+        detailRow('Status', renderStatusBadge(booking.status)),
+      ])}
       <p>We'll email you again as soon as your booking is confirmed.</p>
-      ${footer}
-    `,
+    `),
   });
 };
 
@@ -59,14 +74,15 @@ const sendBookingStatusEmail = async (booking, actionLabel, note) => {
   await sendMail({
     to,
     subject: `Booking ${actionLabel} - ${booking.bookingRef}`,
-    html: `
-      <h2>Hi ${booking.user?.name || ''},</h2>
-      <p>Your booking <strong>${booking.bookingRef}</strong> has been <strong>${actionLabel.toLowerCase()}</strong>.</p>
-      <p><strong>Vehicle:</strong> ${vehicleLabel(booking.vehicle)}</p>
-      <p><strong>Period:</strong> ${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}</p>
-      ${note ? `<p><strong>Note:</strong> ${note}</p>` : ''}
-      ${footer}
-    `,
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
+      <p>Your booking <strong>${booking.bookingRef}</strong> has been ${renderStatusBadge(actionLabel)}.</p>
+      ${detailsTable([
+        detailRow('Vehicle', vehicleLabel(booking.vehicle)),
+        detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
+        ...(note ? [detailRow('Note', note)] : []),
+      ])}
+    `),
   });
 };
 
@@ -78,16 +94,17 @@ const sendBookingUpdatedEmail = async (booking) => {
   await sendMail({
     to,
     subject: `Booking Updated - ${booking.bookingRef}`,
-    html: `
-      <h2>Hi ${booking.user?.name || ''},</h2>
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
       <p>Your booking <strong>${booking.bookingRef}</strong> has been updated. Current details:</p>
-      <p><strong>Vehicle:</strong> ${vehicleLabel(booking.vehicle)}</p>
-      <p><strong>Period:</strong> ${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}</p>
-      <p><strong>Pickup Location:</strong> ${booking.pickupLocation || 'N/A'}</p>
-      <p><strong>Total Amount:</strong> ${money(booking.totalPrice)}</p>
-      <p><strong>Status:</strong> ${booking.status}</p>
-      ${footer}
-    `,
+      ${detailsTable([
+        detailRow('Vehicle', vehicleLabel(booking.vehicle)),
+        detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
+        detailRow('Pickup Location', booking.pickupLocation || 'N/A'),
+        detailRow('Total Amount', money(booking.totalPrice)),
+        detailRow('Status', renderStatusBadge(booking.status)),
+      ])}
+    `),
   });
 };
 
@@ -99,12 +116,11 @@ const sendBookingDeletedEmail = async (booking) => {
   await sendMail({
     to,
     subject: `Booking Cancelled - ${booking.bookingRef}`,
-    html: `
-      <h2>Hi ${booking.user?.name || ''},</h2>
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
       <p>Your booking <strong>${booking.bookingRef}</strong> for ${vehicleLabel(booking.vehicle)} has been cancelled and removed from our system.</p>
       <p>If you believe this is a mistake, please contact us.</p>
-      ${footer}
-    `,
+    `),
   });
 };
 
@@ -116,14 +132,15 @@ const sendPaymentReceivedEmail = async (booking, payment) => {
   await sendMail({
     to,
     subject: `Payment Received - ${booking.bookingRef}`,
-    html: `
-      <h2>Hi ${booking.user?.name || ''},</h2>
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
       <p>We've recorded a payment on your booking <strong>${booking.bookingRef}</strong>.</p>
-      <p><strong>Amount Paid:</strong> ${money(payment.amount)} (${payment.paymentMethod})</p>
-      <p><strong>Total Paid So Far:</strong> ${money(booking.deposit)}</p>
-      <p><strong>Balance Due:</strong> ${money(booking.balance)}</p>
-      ${footer}
-    `,
+      ${detailsTable([
+        detailRow('Amount Paid', `${money(payment.amount)} (${payment.paymentMethod})`),
+        detailRow('Total Paid So Far', money(booking.deposit)),
+        detailRow('Balance Due', money(booking.balance)),
+      ])}
+    `),
   });
 };
 
