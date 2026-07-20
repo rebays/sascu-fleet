@@ -212,8 +212,7 @@ export function calculateBookingPrice(
  */
 
 export interface GuestBookingData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   licenseNumber: string;

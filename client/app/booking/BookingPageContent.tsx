@@ -28,8 +28,7 @@ import {
 } from "lucide-react";
 
 type BookingFormErrors = {
-  firstName?: string;
-  lastName?: string;
+  name?: string;
   email?: string;
   phone?: string;
   licenseNumber?: string;
@@ -69,10 +68,8 @@ export function BookingPageContent() {
     value: string
   ): string | undefined => {
     switch (field) {
-      case "firstName":
-        return value.trim() ? undefined : "First name is required";
-      case "lastName":
-        return value.trim() ? undefined : "Last name is required";
+      case "name":
+        return value.trim() ? undefined : "Given name is required";
       case "email":
         if (!value.trim()) return "Email address is required";
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -144,8 +141,7 @@ export function BookingPageContent() {
 
     const formData = new FormData(e.currentTarget);
     const values = {
-      firstName: formData.get("firstName") as string,
-      lastName: formData.get("lastName") as string,
+      name: formData.get("name") as string,
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       licenseNumber: formData.get("licenseNumber") as string,
@@ -175,8 +171,7 @@ export function BookingPageContent() {
     }
 
     const bookingData: GuestBookingData = {
-      firstName: values.firstName,
-      lastName: values.lastName,
+      name: values.name,
       email: values.email,
       phone: values.phone,
       licenseNumber: values.licenseNumber,
@@ -264,54 +259,29 @@ export function BookingPageContent() {
                 Personal Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label
-                    htmlFor="firstName"
+                    htmlFor="name"
                     className="text-sm font-medium mb-2 block"
                   >
-                    First Name
+                    Given Name
                   </label>
                   <input
                     type="text"
-                    id="firstName"
-                    name="firstName"
-                    placeholder="John"
-                    onBlur={(e) => handleFieldBlur("firstName", e.target.value)}
-                    onChange={() => clearFieldError("firstName")}
-                    aria-invalid={!!fieldErrors.firstName}
+                    id="name"
+                    name="name"
+                    placeholder="John Doe"
+                    onBlur={(e) => handleFieldBlur("name", e.target.value)}
+                    onChange={() => clearFieldError("name")}
+                    aria-invalid={!!fieldErrors.name}
                     className={cn(
                       "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      fieldErrors.firstName &&
+                      fieldErrors.name &&
                         "border-destructive focus-visible:ring-destructive/40"
                     )}
                   />
                   <FieldError className="mt-1.5">
-                    {fieldErrors.firstName}
-                  </FieldError>
-                </div>
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="text-sm font-medium mb-2 block"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    placeholder="Doe"
-                    onBlur={(e) => handleFieldBlur("lastName", e.target.value)}
-                    onChange={() => clearFieldError("lastName")}
-                    aria-invalid={!!fieldErrors.lastName}
-                    className={cn(
-                      "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      fieldErrors.lastName &&
-                        "border-destructive focus-visible:ring-destructive/40"
-                    )}
-                  />
-                  <FieldError className="mt-1.5">
-                    {fieldErrors.lastName}
+                    {fieldErrors.name}
                   </FieldError>
                 </div>
                 <div>

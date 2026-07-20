@@ -20,8 +20,7 @@ const {
 
 const createBooking = catchAsync(async (req, res) => {
   const {
-    firstName,
-    lastName,
+    name,
     email,
     phone,
     licenseNumber,
@@ -33,7 +32,7 @@ const createBooking = catchAsync(async (req, res) => {
     additionalNotes,
   } = req.body;
 
-  if (!firstName || !lastName || !email || !phone || !licenseNumber || !vehicleId || !startDate || !endDate) {
+  if (!name || !email || !phone || !licenseNumber || !vehicleId || !startDate || !endDate) {
     return res.status(400).json({
       success: false,
       message: "Missing required fields",
@@ -71,7 +70,7 @@ const createBooking = catchAsync(async (req, res) => {
   if (!user) {
     const tempPassword = Math.random().toString(36).slice(-8);
     user = await User.create({
-      name: `${firstName} ${lastName}`,
+      name,
       email: email.toLowerCase(),
       password: await bcrypt.hash(tempPassword, 12),
       phone,
