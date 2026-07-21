@@ -44,6 +44,11 @@ export function VehicleCard({
   ctaLabel = "View Details",
   totalPrice,
 }: VehicleCardProps) {
+  const halfDayRate =
+    vehicle.pricePerHalfDay && vehicle.pricePerHalfDay > 0
+      ? vehicle.pricePerHalfDay
+      : vehicle.pricePerDay / 2;
+
   return (
     <Link
       href={href}
@@ -94,12 +99,17 @@ export function VehicleCard({
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-primary">
-            {formatCurrency(vehicle.pricePerDay)}
-            <span className="text-xs font-normal text-muted-foreground">
-              /day
+          <div>
+            <span className="text-xl font-bold text-primary">
+              {formatCurrency(vehicle.pricePerDay)}
+              <span className="text-xs font-normal text-muted-foreground">
+                /day
+              </span>
             </span>
-          </span>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(halfDayRate)} half-day (12hrs or less)
+            </p>
+          </div>
           <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground transition-all group-hover:gap-2">
             {ctaLabel}
             <ArrowRight className="h-4 w-4" />

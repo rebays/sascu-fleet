@@ -27,6 +27,7 @@ import {
   XCircle,
   Info,
   Loader2,
+  Clock,
 } from "lucide-react";
 
 // Map vehicle types to icons
@@ -198,6 +199,11 @@ export function VehicleDetailsContent({ id }: { id: string }) {
       ? calculateBookingPrice(vehicle, startDate, endDate)
       : null;
 
+  const halfDayRate =
+    vehicle.pricePerHalfDay && vehicle.pricePerHalfDay > 0
+      ? vehicle.pricePerHalfDay
+      : vehicle.pricePerDay / 2;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Column - Vehicle Details */}
@@ -252,17 +258,20 @@ export function VehicleDetailsContent({ id }: { id: string }) {
                 {formatCurrency(vehicle.pricePerDay)}
               </p>
             </div>
-            {vehicle.pricePerHour > 0 && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Hourly Rate
-                </p>
-                <p className="font-semibold text-primary">
-                  {formatCurrency(vehicle.pricePerHour)}
-                </p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">
+                Half-Day Rate
+              </p>
+              <p className="font-semibold text-primary">
+                {formatCurrency(halfDayRate)}
+              </p>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-4 flex items-start gap-1.5">
+            <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+            Rentals of 12 hours or less are charged the half-day rate.
+            Rentals longer than 12 hours are charged the full daily rate.
+          </p>
         </div>
 
         {vehicle.description && (
@@ -294,6 +303,16 @@ export function VehicleDetailsContent({ id }: { id: string }) {
             Rental Terms & Policies
           </h2>
           <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Pricing
+              </h3>
+              <p className="text-muted-foreground">
+                Rentals of 12 hours or less are charged the half-day rate.
+                Rentals of more than 12 hours are charged the full daily rate.
+              </p>
+            </div>
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" />

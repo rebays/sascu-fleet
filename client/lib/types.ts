@@ -18,6 +18,13 @@ export interface Vehicle {
   licensePlate: string;
   pricePerHour: number;
   pricePerDay: number;
+  pricePerDayMember?: number;
+  pricePerHalfDay?: number;
+  pricePerHalfDayMember?: number;
+  pricePerDayOutOfTown?: number;
+  pricePerDayMemberOutOfTown?: number;
+  pricePerHalfDayOutOfTown?: number;
+  pricePerHalfDayMemberOutOfTown?: number;
   location: string;
   status?: 'active' | 'inactive';
   image?: string;
