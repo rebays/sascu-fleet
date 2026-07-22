@@ -1,6 +1,6 @@
 // API Response Types matching backend models
 
-export type VehicleType = 'car' | 'bike' | 'scooter' | 'truck';
+export type VehicleType = 'car' | 'bike' | 'scooter' | 'truck' | 'suv' | 'bus';
 
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 

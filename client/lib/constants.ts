@@ -8,10 +8,12 @@ export const VEHICLE_TYPE_DISPLAY: Record<string, string> = {
   bike: "Bike",
   scooter: "Scooter",
   truck: "Truck",
+  suv: "SUV",
+  bus: "Bus",
 };
 
 // Vehicle types for search (backend enum values)
-export const VEHICLE_TYPES = ["car", "bike", "scooter", "truck"] as const;
+export const VEHICLE_TYPES = ["car", "bike", "scooter", "truck", "suv", "bus"] as const;
 
 // Pickup/Dropoff Locations (to be moved to backend later)
 export const LOCATIONS = [{ value: "headoffice", label: "Henderson" }];

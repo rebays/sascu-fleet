@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
@@ -16,10 +15,12 @@ import { formatCurrency } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FieldError } from "@/components/ui/field-error";
+import { VehicleImageCarousel } from "@/components/VehicleImageCarousel";
 import {
   Car,
   Bike,
   Truck,
+  Bus,
   MapPin,
   Calendar,
   AlertCircle,
@@ -39,6 +40,8 @@ const VehicleIcon = ({ type }: { type: string }) => {
       return <Bike className={iconClass} />;
     case "truck":
       return <Truck className={iconClass} />;
+    case "bus":
+      return <Bus className={iconClass} />;
     default:
       return <Car className={iconClass} />;
   }
@@ -211,11 +214,10 @@ export function VehicleDetailsContent({ id }: { id: string }) {
         {/* Vehicle Image */}
         <div className="relative bg-muted/40 rounded-lg h-96 border overflow-hidden">
           {vehicle.images && vehicle.images.length > 0 ? (
-            <Image
-              src={getImageUrl(vehicle.images[0])}
+            <VehicleImageCarousel
+              images={vehicle.images.map(getImageUrl)}
               alt={vehicle.displayName}
-              fill
-              className="object-cover"
+              imageClassName="object-cover"
               sizes="(max-width: 1024px) 100vw, 66vw"
               priority
             />

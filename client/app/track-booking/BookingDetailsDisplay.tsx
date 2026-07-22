@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { type TrackingResponse } from "@/lib/api";
+import { VehicleImageCarousel } from "@/components/VehicleImageCarousel";
 import {
   BOOKING_STATUS_DISPLAY,
   PAYMENT_STATUS_DISPLAY,
@@ -159,11 +159,10 @@ export function BookingDetailsDisplay({
           {bookingDetails.vehicle.images &&
             bookingDetails.vehicle.images.length > 0 && (
               <div className="relative bg-muted/40 h-48 rounded-lg overflow-hidden mb-4 border">
-                <Image
-                  src={getImageUrl(bookingDetails.vehicle.images[0])}
+                <VehicleImageCarousel
+                  images={bookingDetails.vehicle.images.map(getImageUrl)}
                   alt={`${bookingDetails.vehicle.make} ${bookingDetails.vehicle.model}`}
-                  fill
-                  className="object-cover"
+                  imageClassName="object-cover"
                   sizes="(max-width: 768px) 100vw, 400px"
                 />
               </div>

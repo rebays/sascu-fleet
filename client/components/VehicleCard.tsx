@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Car, Bike, Truck, Calendar, MapPin, ArrowRight } from "lucide-react";
+import { Car, Bike, Truck, Bus, Calendar, MapPin, ArrowRight } from "lucide-react";
 import { VEHICLE_TYPE_DISPLAY, API_URL } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import type { VehicleDisplay } from "@/lib/types";
+import { VehicleImageCarousel } from "@/components/VehicleImageCarousel";
 
 const VehicleIcon = ({
   type,
@@ -18,6 +18,8 @@ const VehicleIcon = ({
       return <Bike className={className} />;
     case "truck":
       return <Truck className={className} />;
+    case "bus":
+      return <Bus className={className} />;
     default:
       return <Car className={className} />;
   }
@@ -57,11 +59,10 @@ export function VehicleCard({
       {/* Full-bleed image */}
       <div className="absolute inset-0 bg-muted">
         {vehicle.images && vehicle.images.length > 0 ? (
-          <Image
-            src={getImageUrl(vehicle.images[0])}
+          <VehicleImageCarousel
+            images={vehicle.images.map(getImageUrl)}
             alt={vehicle.displayName}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            imageClassName="object-cover transition-transform duration-500 group-hover:scale-110"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (

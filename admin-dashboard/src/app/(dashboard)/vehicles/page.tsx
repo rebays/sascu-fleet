@@ -453,9 +453,11 @@ export default function VehiclesPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="car">Car</SelectItem>
+                  <SelectItem value="suv">SUV</SelectItem>
                   <SelectItem value="bike">Bike</SelectItem>
                   <SelectItem value="scooter">Scooter</SelectItem>
                   <SelectItem value="truck">Truck</SelectItem>
+                  <SelectItem value="bus">Bus</SelectItem>
                 </SelectContent>
               </Select>
             </div>

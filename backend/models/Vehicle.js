@@ -4,7 +4,7 @@ const vehicleSchema = new mongoose.Schema({
   make: { type: String, required: true },
   model: { type: String, required: true },
   year: { type: Number, required: true },
-  type: { type: String, enum: ['car', 'bike', 'scooter', 'truck'], required: true },
+  type: { type: String, enum: ['car', 'bike', 'scooter', 'truck', 'suv', 'bus'], required: true },
   licensePlate: { type: String, required: true, unique: true },
   // Hourly rates are legacy — kept for existing data/API consumers, but the
   // admin dashboard no longer sets them; new vehicles default to 0.
