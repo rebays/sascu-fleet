@@ -45,6 +45,9 @@ export interface Booking {
   deposit: number;
   balance: number;
   memberId?: string;
+  includeHalfDay?: boolean;
+  requestedPickupTime?: string;
+  confirmedPickupTime?: string;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   payments: Payment[];

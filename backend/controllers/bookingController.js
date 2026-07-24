@@ -16,6 +16,7 @@ const {
   sendBookingUpdatedEmail,
   sendBookingDeletedEmail,
   sendPaymentReceivedEmail,
+  sendPickupTimeConfirmedEmail,
 } = require("../utils/bookingEmails");
 
 const createBooking = catchAsync(async (req, res) => {
@@ -28,6 +29,8 @@ const createBooking = catchAsync(async (req, res) => {
     vehicleId,
     startDate,
     endDate,
+    includeHalfDay,
+    requestedPickupTime,
     pickupLocation,
     additionalNotes,
   } = req.body;
@@ -81,9 +84,15 @@ const createBooking = catchAsync(async (req, res) => {
   const ms = new Date(endDate) - new Date(startDate);
   const hours = ms / (1000 * 60 * 60);
   const days = hours / 24;
-  const totalPrice = days >= 1
-    ? Math.ceil(days) * vehicle.pricePerDay
-    : Math.ceil(hours) * vehicle.pricePerHour;
+  let totalPrice;
+  if (days >= 1) {
+    totalPrice = Math.ceil(days) * vehicle.pricePerDay;
+    if (includeHalfDay) {
+      totalPrice += vehicle.pricePerHalfDay || vehicle.pricePerDay / 2;
+    }
+  } else {
+    totalPrice = Math.ceil(hours) * vehicle.pricePerHour;
+  }
 
   const deposit = Math.ceil(totalPrice * 0.3);
   const balance = totalPrice - deposit;
@@ -99,6 +108,8 @@ const createBooking = catchAsync(async (req, res) => {
     driversLicense: licenseNumber,
     memberId,
     pickupLocation,
+    includeHalfDay: !!includeHalfDay,
+    requestedPickupTime,
     note: additionalNotes,
     status: "pending",
   });
@@ -265,7 +276,7 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { vehicle, startDate, endDate } = req.body;
 
-  const existingBooking = await Booking.findById(id).select('status');
+  const existingBooking = await Booking.findById(id).select('status confirmedPickupTime');
   if (!existingBooking) return res.status(404).json({ message: "Booking not found" });
 
   if (req.user.role !== 'superadmin' && ['confirmed', 'completed'].includes(existingBooking.status)) {
@@ -296,6 +307,8 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
     }
   }
 
+  const previousPickupTime = existingBooking.confirmedPickupTime;
+
   const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -304,6 +317,10 @@ const updateBookingAdmin = catchAsync(async (req, res) => {
   if (!booking) return res.status(404).json({ message: "Booking not found" });
 
   await sendBookingUpdatedEmail(booking);
+
+  if (booking.confirmedPickupTime && booking.confirmedPickupTime !== previousPickupTime) {
+    await sendPickupTimeConfirmedEmail(booking);
+  }
 
   res.json({ success: true, data: booking });
 });

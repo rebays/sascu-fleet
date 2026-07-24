@@ -16,6 +16,7 @@ import { FieldError } from "@/components/ui/field-error";
 import {
   Car,
   Calendar,
+  Clock,
   MapPin,
   User,
   Mail,
@@ -50,6 +51,8 @@ export function BookingPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [pickupDate, setPickupDate] = useState(startDate || "");
   const [returnDate, setReturnDate] = useState(endDate || "");
+  const [pickupTime, setPickupTime] = useState("");
+  const [includeHalfDay, setIncludeHalfDay] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<BookingFormErrors>({});
 
   const today = new Date().toISOString().split("T")[0];
@@ -134,6 +137,12 @@ export function BookingPageContent() {
 
   const days =
     pickupDate && returnDate ? calculateDays(pickupDate, returnDate) : 1;
+  const halfDayRate = vehicle
+    ? vehicle.pricePerHalfDay || vehicle.pricePerDay / 2
+    : 0;
+  const totalPrice = vehicle
+    ? vehicle.pricePerDay * days + (includeHalfDay ? halfDayRate : 0)
+    : 0;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -179,6 +188,8 @@ export function BookingPageContent() {
       vehicleId: vehicleId,
       startDate: pickupDate,
       endDate: returnDate,
+      includeHalfDay,
+      requestedPickupTime: pickupTime || undefined,
       pickupLocation: values.pickupLocation,
       additionalNotes: formData.get("additionalNotes") as string,
     };
@@ -415,6 +426,27 @@ export function BookingPageContent() {
                 </div>
                 <div>
                   <label
+                    htmlFor="pickupTime"
+                    className="text-sm font-medium mb-2 flex items-center gap-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Preferred Pickup Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    id="pickupTime"
+                    name="pickupTime"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    This is a suggestion — we&apos;ll confirm the exact pickup
+                    time by email.
+                  </p>
+                </div>
+                <div>
+                  <label
                     htmlFor="returnDate"
                     className="text-sm font-medium mb-2 block"
                   >
@@ -431,6 +463,25 @@ export function BookingPageContent() {
                   <FieldError className="mt-1.5">
                     {fieldErrors.returnDate}
                   </FieldError>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="flex items-start gap-2.5 rounded-md border border-input bg-background px-3 py-2.5 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includeHalfDay}
+                      onChange={(e) => setIncludeHalfDay(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-input"
+                    />
+                    <span>
+                      Add a half day
+                      <span className="text-muted-foreground">
+                        {" "}
+                        ({formatCurrency(halfDayRate)}) — for a rental that
+                        runs a half day past your full days, e.g. 3 days + a
+                        half day
+                      </span>
+                    </span>
+                  </label>
                 </div>
                 <div className="md:col-span-2">
                   <label
@@ -554,6 +605,7 @@ export function BookingPageContent() {
                   <span className="text-muted-foreground">Duration</span>
                   <span className="font-medium">
                     {days} day{days !== 1 ? "s" : ""}
+                    {includeHalfDay ? " + half day" : ""}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -562,10 +614,18 @@ export function BookingPageContent() {
                     {formatCurrency(vehicle.pricePerDay)}
                   </span>
                 </div>
+                {includeHalfDay && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Half day</span>
+                    <span className="font-medium">
+                      {formatCurrency(halfDayRate)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-3 border-t">
                   <span className="font-semibold">Total Cost</span>
                   <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(vehicle.pricePerDay * days)}
+                    {formatCurrency(totalPrice)}
                   </span>
                 </div>
               </div>

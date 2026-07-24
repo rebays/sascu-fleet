@@ -58,6 +58,7 @@ const sendBookingReceivedEmail = async (booking) => {
         detailRow('Booking Ref', booking.bookingRef),
         detailRow('Vehicle', vehicleLabel(booking.vehicle)),
         detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
+        ...(booking.requestedPickupTime ? [detailRow('Requested Pickup Time', booking.requestedPickupTime)] : []),
         detailRow('Total Amount', money(booking.totalPrice)),
         detailRow('Status', renderStatusBadge(booking.status)),
       ])}
@@ -101,9 +102,36 @@ const sendBookingUpdatedEmail = async (booking) => {
         detailRow('Vehicle', vehicleLabel(booking.vehicle)),
         detailRow('Period', `${fmtDate(booking.startDate)} &rarr; ${fmtDate(booking.endDate)}`),
         detailRow('Pickup Location', booking.pickupLocation || 'N/A'),
+        ...(booking.confirmedPickupTime
+          ? [detailRow('Confirmed Pickup Time', booking.confirmedPickupTime)]
+          : booking.requestedPickupTime
+          ? [detailRow('Requested Pickup Time', booking.requestedPickupTime)]
+          : []),
         detailRow('Total Amount', money(booking.totalPrice)),
         detailRow('Status', renderStatusBadge(booking.status)),
       ])}
+    `),
+  });
+};
+
+// Sent to the client when their pickup time is confirmed (or changed) by an admin.
+const sendPickupTimeConfirmedEmail = async (booking) => {
+  const to = booking.user?.email;
+  if (!to) return;
+
+  await sendMail({
+    to,
+    subject: `Pickup Time Confirmed - ${booking.bookingRef}`,
+    html: renderEmail(`
+      <h2 style="margin-top:0;">Hi ${booking.user?.name || ''},</h2>
+      <p>Your pickup time for booking <strong>${booking.bookingRef}</strong> has been confirmed.</p>
+      ${detailsTable([
+        detailRow('Vehicle', vehicleLabel(booking.vehicle)),
+        detailRow('Pickup Date', fmtDate(booking.startDate)),
+        detailRow('Confirmed Pickup Time', booking.confirmedPickupTime || 'N/A'),
+        detailRow('Pickup Location', booking.pickupLocation || 'N/A'),
+      ])}
+      <p>Please arrive at the pickup location around this time. Contact us if this doesn't work for you.</p>
     `),
   });
 };
@@ -151,4 +179,5 @@ module.exports = {
   sendBookingUpdatedEmail,
   sendBookingDeletedEmail,
   sendPaymentReceivedEmail,
+  sendPickupTimeConfirmedEmail,
 };

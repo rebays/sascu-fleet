@@ -220,6 +220,8 @@ export interface GuestBookingData {
   vehicleId: string;
   startDate: string;
   endDate: string;
+  includeHalfDay?: boolean;
+  requestedPickupTime?: string;
   pickupLocation?: string;
   additionalNotes?: string;
 }

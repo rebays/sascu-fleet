@@ -88,6 +88,7 @@ export default function AdminBookingsPage() {
     memberId: '',
     pickupLocation: '',
     locationType: 'in-town',
+    confirmedPickupTime: '',
     totalPrice: '0.00'
   });
 
@@ -189,6 +190,7 @@ export default function AdminBookingsPage() {
       memberId: '',
       pickupLocation: '',
       locationType: 'in-town',
+      confirmedPickupTime: '',
       totalPrice: '0.00'
     });
     setCreatingUser(false);
@@ -213,6 +215,7 @@ export default function AdminBookingsPage() {
       memberId: booking.memberId || '',
       pickupLocation: booking.pickupLocation || '',
       locationType: booking.locationType || 'in-town',
+      confirmedPickupTime: booking.confirmedPickupTime || '',
       totalPrice: booking.totalPrice.toString(),
     });
     setCreatingUser(false);
@@ -268,6 +271,7 @@ export default function AdminBookingsPage() {
       memberId: form.memberId,
       pickupLocation: form.pickupLocation,
       locationType: form.locationType,
+      confirmedPickupTime: form.confirmedPickupTime || undefined,
       totalPrice: totalPrice,
     };
 
@@ -734,6 +738,21 @@ export default function AdminBookingsPage() {
             />
             <p className="text-sm text-gray-500 mt-1">
               Where the customer will pick up the vehicle
+            </p>
+          </div>
+
+          {/* Confirmed Pickup Time */}
+          <div>
+            <Label>Confirmed Pickup Time</Label>
+            <Input
+              type="time"
+              value={form.confirmedPickupTime || ''}
+              onChange={(e) => setForm({ ...form, confirmedPickupTime: e.target.value })}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {editing?.requestedPickupTime
+                ? `Customer requested ${editing.requestedPickupTime}. Saving here notifies them by email.`
+                : 'Saving a time here notifies the customer by email.'}
             </p>
           </div>
         </div>

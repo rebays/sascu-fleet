@@ -233,6 +233,21 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <span>{booking.pickupLocation}</span>
                 </div>
               )}
+
+              {(booking.requestedPickupTime || booking.confirmedPickupTime) && (
+                <div className="mt-4 flex items-start gap-2 text-sm text-gray-600 dark:text-slate-300 bg-gray-50 dark:bg-slate-900/40 rounded-lg p-3">
+                  <Clock className="w-4 h-4 text-gray-400 dark:text-slate-500 mt-0.5 shrink-0" />
+                  {booking.confirmedPickupTime ? (
+                    <span>
+                      Confirmed pickup time: <strong>{booking.confirmedPickupTime}</strong>
+                    </span>
+                  ) : (
+                    <span>
+                      Customer requested <strong>{booking.requestedPickupTime}</strong> — not yet confirmed
+                    </span>
+                  )}
+                </div>
+              )}
             </Card>
 
             {/* Financials & Status Log Grid */}

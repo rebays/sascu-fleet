@@ -13,6 +13,9 @@ const bookingSchema = new mongoose.Schema({
   memberId: { type: String },
   pickupLocation: { type: String },
   locationType: { type: String, enum: ['in-town', 'out-of-town'], default: 'in-town' },
+  includeHalfDay: { type: Boolean, default: false },
+  requestedPickupTime: { type: String }, // customer's suggested time, e.g. "14:00"
+  confirmedPickupTime: { type: String }, // set/overridden by admin once confirmed
   note: { type: String },
   status: {
     type: String,
