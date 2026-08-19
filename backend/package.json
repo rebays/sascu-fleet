@@ -35,7 +35,7 @@
     "nodemailer": "^7.0.11",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.32.1",
-    "resend": "^6.8.0"
+    "resend": "^6.20.0"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
