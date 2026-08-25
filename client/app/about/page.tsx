@@ -23,7 +23,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 
 export default function AboutPage() {
   return (
-    <div className="-mt-[108px] md:-mt-[88px]">
+    <div className="-mt-27 md:-mt-22">
       {/* Hero Section */}
       <section className="relative bg-linear-to-br from-primary/10 via-primary/5 to-background border-b">
         <div className="container mx-auto px-4 md:px-8 pt-36 md:pt-24 pb-16">
@@ -51,7 +51,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Target className="h-6 w-6 text-primary" />
                   </div>
@@ -66,7 +66,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Heart className="h-6 w-6 text-primary" />
                   </div>
@@ -81,10 +81,10 @@ export default function AboutPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-8 border border-primary/20">
+            <div className="bg-linear-to-br from-primary/20 to-primary/5 rounded-2xl p-8 border border-primary/20">
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <Award className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <Award className="h-6 w-6 text-primary shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold mb-1">Industry Recognition</h4>
                     <p className="text-sm text-muted-foreground">
@@ -93,7 +93,7 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Users className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <Users className="h-6 w-6 text-primary shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold mb-1">Customer First</h4>
                     <p className="text-sm text-muted-foreground">
@@ -102,7 +102,7 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <TrendingUp className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <TrendingUp className="h-6 w-6 text-primary shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold mb-1">Growing Fleet</h4>
                     <p className="text-sm text-muted-foreground">
@@ -141,14 +141,9 @@ export default function AboutPage() {
                 <h3 className="font-bold">Phone</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-1">
-                General: (555) 123-4567
+                General: (677) 7632625
               </p>
-              <p className="text-sm text-muted-foreground mb-1">
-                Bookings: (555) 123-4568
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Support: (555) 123-4569
-              </p>
+             
             </div>
 
             <div className="bg-card border rounded-lg p-6">
@@ -157,14 +152,9 @@ export default function AboutPage() {
                 <h3 className="font-bold">Email</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-1">
-                info@sascufleet.com
+                sascu@flysolomons.com.sb
               </p>
-              <p className="text-sm text-muted-foreground mb-1">
-                bookings@sascufleet.com
-              </p>
-              <p className="text-sm text-muted-foreground">
-                support@sascufleet.com
-              </p>
+              
             </div>
 
             <div className="bg-card border rounded-lg p-6">
