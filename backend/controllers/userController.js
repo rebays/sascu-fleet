@@ -200,7 +200,7 @@ const createAdmin = catchAsync(async (req, res) => {
   });
 });
 
-// Super admin only: reset another admin's password
+// Super admin only: reset any user's password (admin, superadmin, or customer)
 const resetAdminPassword = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { newPassword } = req.body;
@@ -211,11 +211,7 @@ const resetAdminPassword = catchAsync(async (req, res) => {
 
   const target = await User.findById(id);
   if (!target) {
-    return res.status(404).json({ message: 'Admin not found' });
-  }
-
-  if (target.role !== 'admin' && target.role !== 'superadmin') {
-    return res.status(400).json({ message: 'This endpoint can only reset admin passwords' });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   // Super admins reset their own password via the regular "update password" flow.

@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader, IdCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, Plus, Shield, List, Grid3x3, Search, Loader, IdCard, ChevronLeft, ChevronRight, KeyRound } from 'lucide-react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/api';
 
@@ -56,6 +56,11 @@ export default function UsersPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [actionType, setActionType] = useState<'makeMember' | 'removeMember' | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   const isStaff = (u: any) => u.role === 'admin' || u.role === 'superadmin';
 
@@ -176,6 +181,45 @@ export default function UsersPage() {
       setOpen(false);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to save user');
+    }
+  };
+
+  const openResetPasswordModal = (user: any) => {
+    setResetPasswordTarget(user);
+    setNewPassword('');
+    setResetPasswordOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordTarget) return;
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+
+    setResetting(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${resetPasswordTarget._id}/reset-password`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ newPassword }),
+        }
+      );
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Failed to reset password');
+
+      toast.success(data?.message || 'Password reset successfully');
+      setResetPasswordOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to reset password');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -312,6 +356,11 @@ export default function UsersPage() {
                   </Button>
                 )}
                 <div className="flex gap-1">
+                  {isSuperAdmin && c._id !== meRes?._id && (
+                    <Button size="sm" variant="ghost" title="Reset Password" onClick={() => openResetPasswordModal(c)}>
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(c)}>
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -385,6 +434,11 @@ export default function UsersPage() {
                             onClick={() => handleToggleMembership(c._id, !c.isMember)}
                           >
                             {c.isMember ? 'Remove Membership' : 'Make Member'}
+                          </Button>
+                        )}
+                        {isSuperAdmin && c._id !== meRes?._id && (
+                          <Button size="sm" variant="ghost" title="Reset Password" onClick={() => openResetPasswordModal(c)}>
+                            <KeyRound className="w-4 h-4" />
                           </Button>
                         )}
                         <Button size="sm" variant="ghost" title="Edit" onClick={() => openEditModal(c)}>
@@ -515,6 +569,39 @@ export default function UsersPage() {
               Cancel
             </Button>
             <Button onClick={handleSubmit}>Save User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Modal */}
+      <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password{resetPasswordTarget ? ` for ${resetPasswordTarget.name}` : ''}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 6 characters"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                The user will need to use this password next time they log in.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword} disabled={resetting}>
+              {resetting ? 'Resetting...' : 'Reset Password'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
